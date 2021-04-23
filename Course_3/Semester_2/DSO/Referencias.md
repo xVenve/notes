@@ -2460,62 +2460,2531 @@ E. None of the above.
 
 **Figure 9-40c** OS block diagram 3.
 
-\5. [a] What is the difference between a process and a thread?
-[b] What is the difference between a process and a task?
 
-\6. [a] What are the most common schemes used to create tasks?
-[b] Give one example of an OS that uses each of the schemes.
 
-\7. [a] In general terms, what states can a task be in?
-[b] Give one example of an OS and its available states, including the state diagrams.
+# Chapter 8
 
-\8. [a] What is the difference between pre-emptive and non-pre-emptive scheduling?
-[b] Give examples of OSs that implement pre-emptive and non-pre-emptive scheduling.
+# Device Drivers
 
-\9. [a] What is a real-time operating system (RTOS)?
-[b] Give two examples of RTOSs.
+### IN THIS CHAPTER
 
-\10. [T/F] A RTOS does not contain a pre-emptive scheduler.
+• Defining device drivers
 
-\11. Name and describe the most common OS intertask communication and synchronization mechanisms.
+• Discussing the difference between architecture-specific and board-specific drivers
 
-\12. [a] What are race conditions?
-[b] What are some techniques for resolving race conditions?
+• Providing several examples of different types of device drivers
 
-\13. The OS intertask communication mechanism typically used for interrupt handling is:
+Most embedded hardware requires some type of software initialization and management. The software that directly interfaces with and controls this hardware is called a *device driver*. All embedded systems that require software have, at the very least, device driver software in their system software layer. Device drivers are the software libraries that initialize the hardware and manage access to the hardware by higher layers of software. Device drivers are the liaison between the hardware and the operating system, middleware, and application layers. (See [Figure 8-1](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0010).)
 
-A. A message queue.
+![image](Referencias/F00008Xf08-01-9780123821966.jpg)
 
-B. A signal.
+**Figure 8-1** Embedded Systems Model and Device Drivers.
 
-C. A semaphore.
+The reader must always check the details about the particular hardware if the hardware component is not 100% identical to what is currently supported by the embedded system. Never assume existing device drivers in the embedded system will be compatible for a particular hardware part—even if the hardware is the same type of hardware that the embedded device currently supports! So, it is very important when trying to understand device driver libraries that:
 
-D. All of the above.
+• Different types of hardware will have different device driver requirements that need to be met.
 
-E. None of the above.
+• Even the same type of hardware, such as Flash memory, that are created by different manufacturers can require substantially different device driver software libraries to support within the embedded device.
 
-\14. [a] What is the difference between processes running in kernel mode and those running in user mode?
-[b] Give an example of the type of code that would run in each mode.
 
-\15. [a] What is segmentation?
-[b] What are segment addresses made up of?
-[c] What type of information can be found in a segment?
 
-\16. [T/F] A stack is a segment of memory that is structured as a FIFO queue.
+The types of hardware components needing the support of device drivers vary from board to board, but they can be categorized according to the von Neumann model approach introduced in [Chapter 3](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP003.html#CHP003) (see [Figure 8-2](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0015)). The von Neumann model can be used as a software model as well as a hardware model in determining what device drivers are required within a particular platform. Specifically, this can include drivers for the *master processor* architecture-specific functionality, *memory* and memory management drivers, *bus* initialization and transaction drivers, and I/O (input/output) initialization and control drivers (such as for networking, graphics, input devices, storage devices, or debugging I/O) both at the board and master CPU level.
 
-\17. [a] What is paging?
-[b] Name and describe four OS algorithms that can be implemented to swap pages in and out of memory.
+![image](Referencias/F00008Xf08-02-9780123821966.jpg)
 
-\18. [a] What is virtual memory?
-[b] Why use virtual memory?
+**Figure 8-2** Embedded System Board Organization.[[1\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB1)
+Based upon the von Neumann architecture model (also referred to as the Princeton architecture).
 
-\19. [a] Why is POSIX a standard implemented in some OSs?
-[b] List and define four OS APIs defined by POSIX.
-[c] Give examples of three real-world embedded OSs that are POSIX compliant.
+Device drivers are typically considered either *architecture-specific* or *generic*. A device driver that is *architecture-specific* manages the hardware that is integrated into the master processor (the architecture). Examples of architecture-specific drivers that initialize and enable components within a master processor include on-chip memory, integrated memory managers (memory management units (MMUs)), and floating-point hardware. A device driver that is *generic* manages hardware that is located on the board and not integrated onto the master processor. In a generic driver, there are typically architecture-specific portions of source code, because the master processor is the central control unit and to gain access to anything on the board usually means going through the master processor. However, the generic driver also manages board hardware that is not specific to that particular processor, which means that a generic driver can be configured to run on a variety of architectures that contain the related board hardware for which the driver is written. Generic drivers include code that initializes and manages access to the remaining major components of the board, including board buses (I2C, PCI, PCMCIA, etc.), off-chip memory (controllers, level 2+ cache, Flash, etc.), and off-chip I/O (Ethernet, RS-232, display, mouse, etc.).
 
-\20. [a] What are the two subsystems of an OS that most impact OS performance?
-[b] How do the differences in each impact performance?
+[Figure 8-3a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0020) shows a hardware block diagram of an MPC860-based board and [Figure 8-3b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0025) shows a systems diagram that includes examples of MPC860 processor-specific device drivers, as well as generic device drivers.
 
-\21. [a] What is a BSP?
-[b] What type of elements are located within a BSP?
-[c] Give two examples of real-world embedded OSs that include a BSP.
+![image](Referencias/F00008Xf08-03a-9780123821966.jpg)
+
+**Figure 8-3a** MPC860 Hardware Block Diagram.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+![image](Referencias/F00008Xf08-03b-9780123821966.jpg)
+
+**Figure 8-3b** MPC860 Architecture-Specific Device Driver System Stack.
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+Regardless of the type of device driver or the hardware it manages, all device drivers are generally made up of *all* or *some* combination of the following functions:
+
+• *Hardware Startup*: initialization of the hardware upon PowerON or reset.
+
+• *Hardware Shutdown*: configuring hardware into its PowerOFF state.
+
+• *Hardware Disable*: allowing other software to disable hardware on-the-fly.
+
+• *Hardware Enable*: allowing other software to enable hardware on-the-fly.
+
+• *Hardware Acquire*: allowing other software to gain singular (locking) access to hardware.
+
+• *Hardware Release*: allowing other software to free (unlock) hardware.
+
+• *Hardware Read*: allowing other software to read data from hardware.
+
+• *Hardware Write*: allowing other software to write data to hardware.
+
+• *Hardware Install*: allowing other software to install new hardware on-the-fly.
+
+• *Hardware Uninstall*: allowing other software to remove installed hardware on-the-fly.
+
+• *Hardware Mapping*: allowing for address mapping to and from hardware storage devices when reading, writing, and/or deleting data.
+
+• *Hardware Unmapping*: allowing for unmapping (removing) blocks of data from hardware storage devices.
+
+Of course, device drivers may have additional functions, but some or all of the functions shown above are what device drivers inherently have in common. These functions are based upon the software’s implicit perception of hardware, which is that hardware is in one of three states at any given time—*inactive*, *busy*, or *finished*. Hardware in the inactive state is interpreted as being either disconnected (thus the need for an install function), without power (hence the need for an initialization routine), or disabled (thus the need for an enable routine). The busy and finished states are active hardware states, as opposed to inactive; thus the need for uninstall, shutdown, and/or disable functionality. Hardware that is in a busy state is actively processing some type of data and is not idle, and thus may require some type of release mechanism. Hardware that is in the finished state is in an idle state, which then allows for acquisition, read, or write requests, for example.
+
+Again, device drivers may have all or some of these functions, and can integrate some of these functions into single larger functions. Each of these driver functions typically has code that interfaces directly to the hardware and code that interfaces to higher layers of software. In some cases, the distinction between these layers is clear, while in other drivers, the code is tightly integrated (see [Figure 8-4](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0030)).
+
+![image](Referencias/F00008Xf08-04-9780123821966.jpg)
+
+**Figure 8-4** Driver Code Layers.
+
+On a final note, depending on the master processor, different types of software can execute in different modes, the most common being *supervisory* and *user* modes. These modes essentially differ in terms of what system components the software is allowed access to, with software running in supervisory mode having more access (privileges) than software running in user mode. Device driver code typically runs in supervisory mode.
+
+The next several sections provide real-world examples of device drivers that demonstrate how device driver functions can be written and how they can work. By studying these examples, the reader should be able to look at any board and figure out relatively quickly what possible device drivers need to be included in that system, by examining the hardware and going through a checklist, using the von Neumann model as a tool for keeping track of the types of hardware that might require device drivers. While not discussed in this chapter, later chapters will describe how device drivers are integrated into more complex software systems.
+
+## 8.1 Example 1: Device Drivers for Interrupt Handling
+
+As discussed previously, *interrupts* are signals triggered by some event during the execution of an instruction stream by the master processor. What this means is that interrupts can be initiated *asynchronously*, for external hardware devices, resets, power failures, etc., or *synchronously*, for instruction-related activities such as system calls or illegal instructions. These signals cause the master processor to stop executing the current instruction stream and start the process of *handling* (processing) the interrupt.
+
+The software that handles interrupts on the master processor and manages interrupt hardware mechanisms (i.e., the interrupt controller) consists of the *device drivers* for interrupt handling. At least four of the 10 functions from the list of device driver functionality introduced at the start of this chapter are supported by interrupt-handling device drivers, including:
+
+• *Interrupt Handling Startup*: initialization of the interrupt hardware (interrupt controller, activating interrupts, etc.) upon PowerON or reset.
+
+• *Interrupt Handling Shutdown*: configuring interrupt hardware (interrupt controller, deactivating interrupts, etc.) into its PowerOFF state.
+
+• *Interrupt Handling Disable*: allowing other software to disable active interrupts on-the-fly (not allowed for *non-maskable interrupts (NMIs)*, which are interrupts that cannot be disabled).
+
+• *Interrupt Handling Enable*: allowing other software to enable inactive interrupts on-the-fly.
+
+Plus one additional function unique to interrupt handling:
+
+• *Interrupt Handler Servicing*: the interrupt handling code itself, which is executed after the interruption of the main execution stream (this can range in complexity from a simple non-nested routine to nested and/or reentrant routines).
+
+How startup, shutdown, disable, enable, and service functions are implemented in software usually depends on the following criteria:
+
+• The types, number, and priority levels of interrupts available (determined by the interrupt hardware mechanisms on-chip and on-board).
+
+• How interrupts are triggered.
+
+• The interrupt policies of components within the system that trigger interrupts, and the services provided by the master CPU processing the interrupts.
+
+*Note: The material in the following paragraphs is similar to material found in* [Section 4.2.3](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP004.html#S0155) *on interrupts*.
+
+The three main types of interrupts are *software*, *internal hardware*, and *external hardware*. Software interrupts are explicitly triggered internally by some instruction within the current instruction stream being executed by the master processor. Internal hardware interrupts, on the other hand, are initiated by an event that is a result of a problem with the current instruction stream that is being executed by the master processor because of the features (or limitations) of the hardware, such as illegal math operations (overflow, divide-by-zero), debugging (single-stepping, breakpoints), and invalid instructions (opcodes). Interrupts that are raised (requested) by some internal event to the master processor (basically, software and internal hardware interrupts) are also commonly referred to as *exceptions* or *traps*. Exceptions are internally generated hardware interrupts triggered by errors that are detected by the master processor during software execution, such as invalid data or a divide by zero. How exceptions are prioritized and processed is determined by the architecture. Traps are software interrupts specifically generated by the software, via an exception instruction. Finally, external hardware interrupts are interrupts initiated by hardware other than the master CPU (board buses, I/O, etc.).
+
+For interrupts that are raised by external events, the master processor is either wired via an input pin(s) called an *IRQ (Interrupt Request Level)* pin or port, to outside intermediary hardware (e.g., interrupt controllers), or directly to other components on the board with dedicated interrupt ports, that signal the master CPU when they want to raise the interrupt. These types of interrupts are triggered in one of two ways: *level-triggered* or *edge-triggered*. A level-triggered interrupt is initiated when its IRQ signal is at a certain level (i.e., HIGH or LOW; see [Figure 8-5a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0035)). These interrupts are processed when the CPU finds a request for a level-triggered interrupt when sampling its IRQ line, such as at the end of processing each instruction.
+
+![image](Referencias/F00008Xf08-05a-9780123821966.jpg)
+
+**Figure 8-5a** Level-Triggered Interrupts.[[3\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB3)
+
+Edge-triggered interrupts are triggered when a change occurs on the IRQ line (from LOW to HIGH/rising edge of signal or from HIGH to LOW/falling edge of signal; see [Figure 8-5b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0040)). Once triggered, these interrupts latch into the CPU until processed.
+
+![image](Referencias/F00008Xf08-05b-9780123821966.jpg)
+
+**Figure 8-5b** Edge-Triggered Interrupts.[[3\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB3)
+
+Both types of interrupts have their strengths and drawbacks. With a level-triggered interrupt, as shown in the example in [Figure 8-6a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0045), if the request is being processed and has not been disabled before the next sampling period, the CPU will try to service the same interrupt again. On the flip side, if the level-triggered interrupt were triggered and then disabled before the CPU’s sample period, the CPU would never note its existence and would therefore never process it. Edge-triggered interrupts could have problems if they share the same IRQ line, if they were triggered in the same manner at about the same time (say before the CPU could process the first interrupt), resulting in the CPU being able to detect only one of the interrupts (see [Figure 8-6b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0050)).
+
+![image](Referencias/F00008Xf08-06a-9780123821966.jpg)
+
+**Figure 8-6a** Level-Triggered Interrupts Drawbacks.[[3\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB3)
+
+![image](Referencias/F00008Xf08-06b-9780123821966.jpg)
+
+**Figure 8-6b** Edge-Triggered Interrupts Drawbacks.[[3\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB3)
+
+Because of these drawbacks, level-triggered interrupts are generally recommended for interrupts that share IRQ lines, whereas edge-triggered interrupts are typically recommended for interrupt signals that are very short or very long.
+
+At the point an IRQ of a master processor receives a signal that an interrupt has been raised, the interrupt is processed by the interrupt-handling mechanisms within the system. These mechanisms are made up of a combination of both hardware and software components. In terms of hardware, an *interrupt controller* can be integrated onto a board, or within a processor, to mediate interrupt transactions in conjunction with software. Architectures that include an interrupt controller within their interrupt-handling schemes include the 268/386 (x86) architectures, which use two PICs (Intel’s Programmable Interrupt Controller); MIPS32, which relies on an external interrupt controller; and the MPC860 (shown in [Figure 8-7a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0055)), which integrates two interrupt controllers, one in the CPM and one in its SIU. For systems with no interrupt controller, such as the Mitsubishi M37267M8 TV microcontroller shown in [Figure 8-7b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0060), the interrupt request lines are connected directly to the master processor, and interrupt transactions are controlled via software and some internal circuitry, such as registers and/or counters.
+
+![image](Referencias/F00008Xf08-07a-9780123821966.jpg)
+
+**Figure 8-7a** Motorola/Freescale MPC860 Interrupt Controllers.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+![image](Referencias/F00008Xf08-07b-9780123821966.jpg)
+
+**Figure 8-7b** Mitsubishi M37267M8 Circuitry.[[5\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB5)
+
+*Interrupt acknowledgment (IACK)* is typically handled by the master processor when an external device triggers an interrupt. Because IACK cycles are a function of the local bus, the IACK function of the master CPU depends on interrupt policies of system buses, as well as the interrupt policies of components within the system that trigger the interrupts. With respect to the external device triggering an interrupt, the interrupt scheme depends on whether that device can provide an *interrupt vector* (a place in memory that holds the address of an interrupt’s *ISR (Interrupt Service Routine)*, the software that the master CPU executes after the triggering of an interrupt). For devices that cannot provide an interrupt vector, referred to as *non-vectored* interrupts, master processors implement an *auto-vectored* interrupt scheme in which one ISR is shared by the non-vectored interrupts; determining which specific interrupt to handle, interrupt acknowledgment, etc., are all handled by the ISR software.
+
+An *interrupt-vectored* scheme is implemented to support peripherals that can provide an interrupt vector over a bus and where acknowledgment is automatic. An IACK-related register on the master CPU informs the device requesting the interrupt to stop requesting interrupt service, and provides what the master processor needs to process the correct interrupt (such as the interrupt number and vector number). Based upon the activation of an external interrupt pin, an interrupt controller’s interrupt select register, a device’s interrupt select register, or some combination of the above, the master processor can determine which ISR to execute. After the ISR completes, the master processor resets the interrupt status by adjusting the bits in the processor’s status register or an interrupt mask in the external interrupt controller. The interrupt request and acknowledgment mechanisms are determined by the device requesting the interrupt (since it determines which interrupt service to trigger), the master processor, and the system bus protocols.
+
+Keep in mind that this is a general introduction to interrupt handling, covering some of the key features found in a variety of schemes. The overall interrupt-handling scheme can vary widely from architecture to architecture. For example, PowerPC architectures implement an auto-vectored scheme, with no interrupt vector base register. The 68000 architecture supports both auto-vectored and interrupt-vectored schemes, whereas MIPS32 architectures have no IACK cycle and so the interrupt handler handles the triggered interrupts.
+
+### 8.1.1 INTERRUPT PRIORITIES
+
+Because there are potentially multiple components on an embedded board that may need to request interrupts, the scheme that manages all of the different types of interrupts is *priority-based*. This means that all available interrupts within a processor have an associated interrupt level, which is the priority of that interrupt within the system. Typically, interrupts starting at level “1” are the highest priority within the system and incrementally from there (2, 3, 4, etc.) the priorities of the associated interrupts decrease. Interrupts with higher levels have precedence over any instruction stream being executed by the master processor, meaning that not only do interrupts have precedence over the main program, but higher priority interrupts have priority over interrupts with lower priorities as well. When an interrupt is triggered, lower priority interrupts are typically *masked*, meaning they are not allowed to trigger when the system is handling a higher-priority interrupt. The interrupt with the highest priority is usually called an *NMI*.
+
+How the components are prioritized depends on the IRQ line they are connected to, in the case of external devices, or what has been assigned by the processor design. It is the master processor’s internal design that determines the number of external interrupts available and the interrupt levels supported within an embedded system. In [Figure 8-8a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0065), the MPC860 CPM, SIU, and PowerPC Core all work together to implement interrupts on the MPC823 processor. The CPM allows for internal interrupts (two SCCs, two SMCs, SPI, I2C, PIP, general-purpose timers, two IDMAs, SDMA, RISC Timer) and 12 external pins of port C, and it drives the interrupt levels on the SIU. The SIU receives interrupts from eight external pins (IRQ0–7) and eight internal sources, for a total of 16 sources of interrupts, one of which can be the CPM, and drives the IREQ input to the Core. When the IREQ pin is asserted, external interrupt processing begins. The priority levels are shown in [Figure 8-8b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0070).
+
+![image](Referencias/F00008Xf08-08a-9780123821966.jpg)
+
+**Figure 8-8a** Motorola/Freescale MPC860 Interrupt pins and table.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+![image](Referencias/F00008Xf08-08b-9780123821966.jpg)
+
+**Figure 8-8b** Motorola/Freescale MPC860 Interrupt Levels.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+In another processor, such as the 68000 (shown in [Figures 8-9a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0075) and [b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0080)), there are eight levels of interrupts (0–7), where interrupts at level 7 have the highest priority. The 68000 interrupt table (see [Figure 8-9b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0080)) contains 256 32-bit vectors.
+
+![image](Referencias/F00008Xf08-09a-9780123821966.jpg)
+
+**Figure 8-9a** Motorola/Freescale 68000 IRQs.[[6\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB6)
+There are 3 IRQ pins: IPL0, IPL1, and IPL2.
+
+![image](Referencias/F00008Xf08-09b-9780123821966.jpg)
+
+**Figure 8-9b** Motorola/Freescale 68000 IRQs Interrupt Table.[[6\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB6)
+
+The M37267M8 architecture (shown in [Figure 8-10a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0085)) allows for interrupts to be caused by 16 events (13 internal, two external, and one software), whose priorities and usages are summarized in [Figure 8-10b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0090).
+
+![image](Referencias/F00008Xf08-10a-9780123821966.jpg)
+
+**Figure 8-10a** Mitsubishi M37267M8 8-bit TV Microcontroller Interrupts.[[5\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB5)
+
+![image](Referencias/F00008Xf08-10b-9780123821966.jpg)
+
+**Figure 8-10b** Mitsubishi M37267M8 8-bit TV Microcontroller Interrupt table.[[5\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB5)
+
+Several different priority schemes are implemented in the various architectures. These schemes commonly fall under one of three models: the *equal single level*, where the latest interrupt to be triggered gets the CPU; the *static multilevel*, where priorities are assigned by a priority encoder, and the interrupt with the highest priority gets the CPU; and the *dynamic multilevel*, where a priority encoder assigns priorities and the priorities are reassigned when a new interrupt is triggered.
+
+### 8.1.2 CONTEXT SWITCHING
+
+After the hardware mechanisms have determined which interrupt to handle and have acknowledged the interrupt, the current instruction stream is halted and a *context switch* is performed, a process in which the master processor switches from executing the current instruction stream to another set of instructions. This alternate set of instructions being executed as the result of an interrupt is the *ISR* or *interrupt handler*. An ISR is simply a fast, short program that is executed when an interrupt is triggered. The specific ISR executed for a particular interrupt depends on whether a non-vectored or vectored scheme is in place. In the case of a non-vectored interrupt, a memory location contains the start of an ISR that the *PC (program counter)* or some similar mechanism branches to for all non-vectored interrupts. The ISR code then determines the source of the interrupt and provides the appropriate processing. In a vectored scheme, typically an interrupt vector table contains the address of the ISR.
+
+The steps involved in an interrupt context switch include stopping the current program’s execution of instructions, saving the context information (registers, the PC, or similar mechanism that indicates where the processor should jump back to after executing the ISR) onto a stack, either dedicated or shared with other system software, and perhaps the disabling of other interrupts. After the master processor finishes executing the ISR, it context switches back to the original instruction stream that had been interrupted, using the context information as a guide.
+
+The *interrupt services* provided by device driver code, based upon the mechanisms discussed above, include *enabling/disabling* interrupts through an interrupt control register on the master CPU or the disabling of the interrupt controller, *connecting* the ISRs to the interrupt table, providing interrupt levels and vector numbers to peripherals, providing address and control data to corresponding registers, etc. Additional services implemented in interrupt access drivers include the *locking/unlocking* of interrupts, and the implementation of the actual ISRs. The pseudocode in the following example shows interrupt handling initialization and access drivers that act as the basis of interrupt services (in the CPM and SIU) on the MPC860.
+
+### 8.1.3 INTERRUPT DEVICE DRIVER PSEUDOCODE EXAMPLES
+
+The following pseudocode examples demonstrate the implementation of various interrupt-handling routines on the MPC860, specifically startup, shutdown, disable, enable, and interrupt servicing functions in reference to this architecture. These examples show how interrupt handling can be implemented on a more complex architecture like the MPC860, and this in turn can be used as a guide to understand how to write interrupt-handling drivers on other processors that are as complex or less complex than this one.
+
+#### Interrupt Handling Startup (Initialization) MPC860
+
+*Overview of initializing interrupts on MPC860 (in both CPM and SIU)*
+
+\1. Initializing CPM Interrupts in MPC860 Example
+
+1.1. Setting Interrupt Priorities via CICR.
+
+1.2. Setting individual enable bit for interrupts via CIMR.
+
+1.3. Initializing SIU Interrupts via SIU Mask Register including setting the SIU bit associated with the level that the CPM uses to assert an interrupt.
+
+1.4. Set Master Enable bit for all CPM interrupts.
+
+
+
+\2. Initializing SIU Interrupts on MPC860 Example
+
+2.1. Initializing the SIEL Register to select the edge-triggered or level-triggered interrupt handling for external interrupts and whether processor can exit/wakeup from low power mode.
+
+2.2. If not done, initializing SIU Interrupts via SIU Mask Register including setting the SIU bit associated with the level that the CPM uses to assert an interrupt.
+
+![image](Referencias/F00008Xf08-11a-9780123821966.jpg)
+
+**Figure 8-11a** CICR Register.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+** Enabling all interrupts via MPC860 "mtspr" instruction next step—see Interrupt Handling Enable **
+
+**// Initializing CPM for interrupts - four-step process**
+
+*// ***** **step 1** ******
+
+*// initializing the 24-bit CICR (see Figure 8-11), setting priorities and the interrupt*
+
+*// levels. Interrupt Request Level, or IRL[0:2] allows a user to program the priority*
+
+*// request level of the CPM interrupt with any number from level 0 (highest priority)*
+
+*// through level 7 (lowest priority).*
+
+
+
+…
+
+int RESERVED94 = 0xFF000000; // bits 0-7 reserved, all set to 1
+
+*// the PowerPC SCCs are prioritized relative to each other. Each SCxP field is representative*
+
+*// of a priority for each SCC where SCdP is the lowest and ScaP is the highest priority.*
+
+*// Each SCxP field is made up of 2 bits (0-3), one for each SCC, where 0d (00b) = SCC1*,
+
+*// 1d (01b) = SCC2, 2d (10b) = SCC3, and 3d (11b) = SCC4. See* [*Figure 8-11b*](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0095).
+
+![image](Referencias/F00008Xf08-11b-9780123821966.jpg)
+
+**Figure 8-11b** SCC Priorities.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+int CICR.SCdP = 0×00C00000; // bits 8-9 both = 1, SCC4 = lowest priority
+
+int CICR.SCcP = 0×00000000; // bits 10-11, both = 0, SCC1 = 2nd to lowest priority
+
+int CICR.SCbP = 0×00040000; // bits 12-13,=01b, SCC2 2nd highest priority
+
+int CICR.SCaP = 0×00020000; // bits 14-15,=10b, SCC3 highest priority
+
+*// IRL0_IRL2 is a 3-bit configuration parameter called the Interrupt Request Level - it*
+
+*// allows a user to program the priority request level of the CPM interrupt with bits*
+
+*// 16-18 with a value of 0-7 in terms of its priority mapping within the SIU. In this*
+
+*// example, it is a priority 7 since all 3 bits set to 1.*
+
+int CICR.IRL0 = 0×00008000; // interrupt request level 0 (bit 16)=1
+
+int CICR.IRL1 = 0×00004000; // interrupt request level 1 (bit 17)=1
+
+int CICR.IRL2 = 0×00002000; // interrupt request level 2 (bit 18)=1
+
+// HP0-HP 4 are five bits (19-23) used to represent one of the CPM Interrupt Controller
+
+// interrupt sources (shown in [Figure 8-8b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0070)) as being the highest priority source relative to
+
+// their bit location in the CIPR register - see [Figure 8-11c](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0100). In this example, HP0-HP4
+
+![image](Referencias/F00008Xf08-11c-9780123821966.jpg)
+
+**Figure 8-11c** CIPR Register.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+//=11111b (31d) so highest external priority source to the PowerPC core is PC15
+
+int CICR.HP0 = 0×00001000;/* Highest priority */
+
+int CICR.HP1 = 0×00000800;/* Highest priority */
+
+int CICR.HP2 = 0×00000400;/* Highest priority */
+
+int CICR.HP3 = 0×00000200;/* Highest priority */
+
+int CICR.HP4 = 0×00000100;/* Highest priority */
+
+// IEN bit 24 - Master enable for CPM interrupts - not enabled here - see step 4
+
+int RESERVED95 = 0×0000007E;// bits 25-30 reserved, all set to 1
+
+int CICR.SPS = 0×00000001;// Spread priority scheme in which SCCs are spread
+
+ // out by priority in interrupt table, rather than grouped
+
+ // by priority at the top of the table
+
+*// ***** **step 2** ******
+
+*// initializing the 32-bit CIMR (see* [*Figure 8-12*](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0105)*), CIMR bits correspond to CMP*
+
+![image](Referencias/F00008Xf08-12-9780123821966.jpg)
+
+**Figure 8-12** CIMR Register.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+*// Interrupt Sources indicated in CIPR (see* [*Figure 8-11c*](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0100)*), by setting the bits*
+
+*// associated with the desired interrupt sources in the CIMR register (each bit*
+
+*// corresponds to a CPM interrupt source).*
+
+
+
+int CIMR.PC15 = 0×80000000; // PC15 (Bit 0) set to 1, interrupt source enabled
+
+int CIMR.SCC1 = 0×40000000; // SCC1 (Bit 1) set to 1, interrupt source enabled
+
+int CIMR.SCC2 = 0×20000000; // SCC2 (Bit 2) set to 1, interrupt source enabled
+
+int CIMR.SCC4 = 0×08000000; // SCC4 (Bit 4) set to 1, interrupt source enabled
+
+int CIMR.PC14 = 0×04000000; // PC14 (Bit 5) set to 1, interrupt source enabled
+
+int CIMR.TIMER1 = 0×02000000; // Timer1 (Bit 6) set to 1, interrupt source enabled
+
+int CIMR.PC13 = 0×01000000; // PC13 (Bit 7) set to 1, interrupt source enabled
+
+int CIMR.PC12 = 0×00800000; // PC12 (Bit 8) set to 1, interrupt source enabled
+
+int CIMR.SDMA = 0×00400000; // SDMA (Bit 9) set to 1, interrupt source enabled
+
+int CIMR.IDMA1 = 0×00200000; // IDMA1 (Bit 10) set to 1, interrupt source enabled
+
+int CIMR.IDMA2 = 0×00100000; // IDMA2 (Bit 11) set to 1, interrupt source enabled
+
+int RESERVED100 = 0×00080000; // unused bit 12
+
+int CIMR.TIMER2 = 0×00040000; // Timer2 (Bit 13) set to 1, interrupt source enabled
+
+int CIMR.R.TT = 0×00020000; // R-TT (Bit 14) set to 1, interrupt source enabled
+
+int CIMR.I2C = 0×00010000; // I2C (Bit 15) set to 1, interrupt source enabled
+
+int CIMR.PC11 = 0×00008000; // PC11 (Bit 16) set to 1, interrupt source enabled
+
+int CIMR.PC10 = 0×00004000; // PC10 (Bit 17) set to 1, interrupt source enabled
+
+int RESERVED101 = 0×00002000; // unused bit 18
+
+int CIMR.TIMER3 = 0×00001000; // Timer3 (Bit 19) set to 1, interrupt source enabled
+
+int CIMR.PC9 = 0×00000800; // PC9 (Bit 20) set to 1, interrupt source enabled
+
+int CIMR.PC8 = 0×00000400; // PC8 (Bit 21) set to 1, interrupt source enabled
+
+int CIMR.PC7 = 0×00000200; // PC7 (Bit 22) set to 1, interrupt source enabled
+
+int RESERVED102 = 0×00000100; // unused bit 23
+
+int CIMR.TIMER4 = 0×00000080; // Timer4 (Bit 24) set to 1, interrupt source enabled
+
+int CIMR.PC6 = 0×00000040; // PC6 (Bit 25) set to 1, interrupt source enabled
+
+int CIMR.SPI = 0×00000020; // SPI (Bit 26) set to 1, interrupt source enabled
+
+int CIMR.SMC1 = 0×00000010; // SMC1 (Bit 27) set to 1, interrupt source enabled
+
+int CIMR.SMC2-PIP = 0×00000008; // SMC2/PIP (Bit 28) set to 1, interrupt source enabled
+
+int CIMR.PC5 = 0×00000004; // PC5 (Bit 29) set to 1, interrupt source enabled
+
+int CIMR.PC4 = 0×00000002; // PC4 (Bit 30) set to 1, interrupt source enabled
+
+int RESERVED103 = 0×00000001; // unused bit 31
+
+// ****** **step 3** ******
+
+// Initializing the SIU Interrupt Mask Register (see [Figure 8-13](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0110)) including setting the SIU
+
+![image](Referencias/F00008Xf08-13-9780123821966.jpg)
+
+**Figure 8-13** SIMASK Register.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+// bit associated with the level that the CPM uses to assert an interrupt.
+
+
+
+int SIMASK.IRM0 = 0×80000000; // enable external interrupt input level 0
+
+int SIMASK.LVM0 = 0×40000000; // enable internal interrupt input level 0
+
+int SIMASK.IRM1 = 0×20000000; // enable external interrupt input level 1
+
+int SIMASK.LVM1 = 0×10000000; // enable internal interrupt input level 1
+
+int SIMASK.IRM2 = 0×08000000; // enable external interrupt input level 2
+
+int SIMASK.LVM2 = 0×04000000; // enable internal interrupt input level 2
+
+int SIMASK.IRM3 = 0×02000000; // enable external interrupt input level 3
+
+int SIMASK.LVM3 = 0×01000000; // enable internal interrupt input level 3
+
+int SIMASK.IRM4 = 0×00800000; // enable external interrupt input level 4
+
+int SIMASK.LVM4 = 0×00400000; // enable internal interrupt input level 4
+
+int SIMASK.IRM5 = 0×00200000; // enable external interrupt input level 5
+
+int SIMASK.LVM5 = 0×00100000; // enable internal interrupt input level 5
+
+int SIMASK.IRM6 = 0×00080000; // enable external interrupt input level 6
+
+int SIMASK.LVM6 = 0×00040000; // enable internal interrupt input level 6
+
+int SIMASK.IRM7 = 0×00020000; // enable external interrupt input level 7
+
+int SIMASK.LVM7 = 0×00010000; // enable internal interrupt input level 7
+
+int RESERVED6 = 0×0000FFFF; // unused bits 16-31
+
+*// ***** **step 4** ******
+
+
+
+// IEN bit 24 of CICR register - Master enable for CPM interrupts
+
+int CICR.IEN = 0×00000080; // interrupts enabled IEN = 1
+
+**// Initializing SIU for interrupts - two-step process**
+
+// ****** **step 1** ******
+
+// Initializing the SIEL Register (see [Figure 8-14](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0115)) to select the edge-triggered (set to 1
+
+![image](Referencias/F00008Xf08-14-9780123821966.jpg)
+
+**Figure 8-14** SIEL Register.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+// for falling edge indicating interrupt request) or level-triggered (set to 0 for a 0 logic
+
+// level indicating interrupt request) interrupt handling for external interrupts (bits
+
+// 0, 2, 4, 6, 8, 10, 12, 14) and whether processor can exit/wakeup from low power mode
+
+// (bits 1, 3, 5, 7, 9, 11, 13, 15). Set to 0 is NO, set to 1 is Yes
+
+
+
+int SIEL.ED0 = 0×80000000; // interrupt level 0 (falling) edge-triggered
+
+int SIEL.WM0 = 0×40000000; // IRQ at interrupt level 0 allows CPU to exit from low
+
+ // power mode
+
+int SIEL.ED1 = 0×20000000; // interrupt level 1 (falling) edge-triggered
+
+int SIEL.WM1 = 0×10000000; // IRQ at interrupt level 1 allows CPU to exit from low
+
+ // power mode
+
+int SIEL.ED2 = 0×08000000; // interrupt level 2 (falling) edge-triggered
+
+int SIEL.WM2 = 0×04000000; // IRQ at interrupt level 2 allows CPU to exit from low
+
+ // power mode
+
+int SIEL.ED3 = 0×02000000; // interrupt level 3 (falling) edge-triggered
+
+int SIEL.WM3 = 0×01000000; // IRQ at interrupt level 3 allows CPU to exit from low
+
+ // power mode
+
+int SIEL.ED4 = 0×00800000; // interrupt level 4 (falling) edge-triggered
+
+int SIEL.WM4 = 0×00400000; // IRQ at interrupt level 4 allows CPU to exit from low
+
+ // power mode
+
+int SIEL.ED5 = 0×00200000; // interrupt level 5 (falling) edge-triggered
+
+int SIEL.WM5 = 0×00100000; // IRQ at interrupt level 5 allows CPU to exit from low
+
+ // power mode
+
+int SIEL.ED6 = 0×00080000; // interrupt level 6 (falling) edge-triggered
+
+int SIEL.WM6 = 0×00040000; // IRQ at interrupt level 6 allows CPU to exit from low
+
+ // power mode
+
+int SIEL.ED7 = 0×00020000; // interrupt level 7 (falling) edge-triggered
+
+int SIEL.WM7 = 0×00010000; // IRQ at interrupt level 7 allows CPU to exit from low
+
+ // power mode
+
+int RESERVED7 = 0×0000FFFF; // bits 16-31 unused
+
+*// ***** **step 2** ******
+
+// Initializing SIMASK register - done in step 3 of initializing CPM.
+
+#### Interrupt Handling Shutdown on MPC860
+
+There essentially is no shutdown process for interrupt handling on the MPC860, other than perhaps disabling interrupts during the process.
+
+// Essentially disabling all interrupts via IEN bit 24 of CICR - Master disable for CPM
+
+// interrupts
+
+CICR.IEN="CICR.IEN" AND "0"; // interrupts disabled IEN = 0
+
+
+
+#### Interrupt Handling Disable on MPC860
+
+
+
+// To disable specific interrupt means modifying the SIMASK, so disabling the external
+
+// interrupt at level 7 (IRQ7) for example is done by clearing bit 14
+
+SIMASK.IRM7="SIMASK.IRM7" AND "0"; // disable external interrupt input level 7
+
+// disabling of all interrupts takes effect with the mtspr instruction.
+
+mtspr 82,0; // disable interrupts via mtspr (move to special purpose register)
+
+ // instruction
+
+#### Interrupt Handling Enable on MPC860
+
+
+
+// specific enabling of particular interrupts done in initialization section of this example -
+
+// so the interrupt enable of all interrupts takes effect with the mtspr instruction.
+
+mtspr 80,0; // enable interrupts via mtspr (move to special purpose
+
+ // register) instruction
+
+// in review, to enable specific interrupt means modifying the SIMASK, so enabling the
+
+// external interrupt at level 7 (IRQ7) for example is done by setting bit 14
+
+SIMASK.IRM7="SIMASK.IRM7" OR "1"; // enable external interrupt input level 7
+
+#### Interrupt Handling Servicing on MPC860
+
+In general, this ISR (and most ISRs) essentially disables interrupts first, saves the context information, processes the interrupt, restores the context information, and then enables interrupts.
+
+InterruptServiceRoutineExample ()
+
+{
+
+ …
+
+ // disable interrupts
+
+ disableInterrupts(); // mtspr 82,0;
+
+ // save registers
+
+ saveState();
+
+ // read which interrupt from SI Vector Register (SIVEC)
+
+ interruptCode = SIVEC.IC;
+
+ // if IRQ 7 then execute
+
+ if (interruptCode = IRQ7) {
+
+ …
+
+ // If an IRQx is edge-triggered, then clear the service bit in the SI Pending Register
+
+ // by putting a "1".
+
+ SIPEND.IRQ7 = SIPEND.IRQ7 OR "1";
+
+ // main process
+
+ …
+
+ } // endif IRQ7
+
+ // restore registers
+
+ restoreState();
+
+ // re-enable interrupts
+
+ enableInterrupts(); // mtspr 80,0;
+
+}
+
+### 8.1.4 INTERRUPT HANDLING AND PERFORMANCE
+
+The performance of an embedded design is affected by the *latencies* (delays) involved with the interrupt-handling scheme. The interrupt *latency* is essentially the time from when an interrupt is triggered until its ISR starts executing. The master CPU, under normal circumstances, accounts for a lot of overhead for the time it takes to process the interrupt request and acknowledge the interrupt, obtaining an interrupt vector (in a vectored scheme), and context switching to the ISR. In the case when a lower-priority interrupt is triggered during the processing of a higher priority interrupt, or a higher priority interrupt is triggered during the processing of a lower priority interrupt, the interrupt latency for the original lower priority interrupt increases to include the time in which the higher priority interrupt is handled (essentially how long the lower priority interrupt is disabled). [Figure 8-15](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0120) summarizes the variables that impact interrupt latency.
+
+![image](Referencias/F00008Xf08-15-9780123821966.jpg)
+
+**Figure 8-15** Interrupt Latency.
+
+Within the ISR itself, additional overhead is caused by the context information being stored at the start of the ISR and retrieved at the end of the ISR. The time to context switch back to the original instruction stream that the CPU was executing before the interrupt was triggered also adds to the overall interrupt execution time. While the hardware aspects of interrupt handling (the context switching, processing interrupt requests, etc.) are beyond the software’s control, the overhead related to when the context information is saved, as well as how the ISR is written both in terms of the programming language used and the size, are under the software’s control. Smaller ISRs, or ISRs written in a lower-level language like assembly, as opposed to larger ISRs or ISRs written in higher-level languages like Java, or saving/retrieving less context information at the start and end of an ISR, can all decrease the interrupt handling execution time and increase performance.
+
+## 8.2 Example 2: Memory Device Drivers
+
+While in reality all types of physical memory are two-dimensional arrays (matrices) made up of cells addressed by a unique row and column, the master processor and programmers view memory as a large one-dimensional array, commonly referred to as the *memory map* (see [Figure 8-16](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0125)). In the memory map, each cell of the array is a row of bytes (8 bits) and the number of bytes per row depends on the width of the data bus (8-, 16-, 32-, 64-bit, etc.). This, in turn, depends on the width of the registers of the master architecture. When physical memory is referenced from the software’s point-of-view it is commonly referred to as *logical* memory and its most basic unit is the byte. Logical memory is made up of all the physical memory (registers, ROM, and RAM) in the entire embedded system.
+
+![image](Referencias/F00008Xf08-16-9780123821966.jpg)
+
+**Figure 8-16** Sample Memory Map.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+The software must provide the processors in the system with the ability to access various portions of the memory map. The software involved in managing the memory on the master processor and on the board, as well as managing memory hardware mechanisms, consists of the *device drivers* for the management of the overall memory subsystem. The memory subsystem includes all types of memory management components, such as memory controllers and MMU, as well as the types of memory in the memory map, such as registers, cache, ROM, and DRAM. All or some combination of six of the 10 device driver functions from the list of device driver functionality introduced at the start of this chapter are commonly implemented, including:
+
+• *Memory Subsystem Startup*: initialization of the hardware upon PowerON or reset (initialize translation lookaside buffers (TLBs) for MMU, initialize/configure MMU).
+
+• *Memory Subsystem Shutdown*: configuring hardware into its PowerOFF state. *(Note: Under the MPC860, there is no necessary shutdown sequence for the memory subsystem, so pseudocode examples are not shown.)*
+
+• *Memory Subsystem Disable*: allowing other software to disable hardware on-the-fly (disabling cache).
+
+• *Memory Subsystem Enable*: allowing other software to enable hardware on-the-fly (enable cache).
+
+• *Memory Subsystem Write*: storing in memory a byte or set of bytes (i.e., in cache, ROM, and main memory).
+
+• *Memory Subsystem Read*: retrieving from memory a “copy” of the data in the form of a byte or set of bytes (i.e., in cache, ROM, and main memory).
+
+Regardless of what type of data is being read or written, all data within memory is managed as a sequence of bytes. While one memory access is limited to the size of the data bus, certain architectures manage access to larger *blocks* (a contiguous set of bytes) of data, called *segments*, and thus implement a more complex address translation scheme in which the logical address provided via software is made up of a *segment number* (address of start of segment) and *offset* (within a segment) which is used to determine the physical address of the memory location.
+
+The order in which bytes are retrieved or stored in memory depends on the *byte ordering* scheme of an architecture. The two possible byte ordering schemes are *little-endian* and *big-endian*. In little-endian mode, bytes (or “bits” with 1-byte (8-bit) schemes) are retrieved and stored in the order of the lowest byte first, meaning the lowest byte is furthest to the left. In big-endian mode bytes are accessed in the order of the highest byte first, meaning that the lowest byte is furthest to the right (see [Figure 8-17](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0130)).
+
+![image](Referencias/F00008Xf08-17-9780123821966.jpg)
+
+**Figure 8-17** Endianess.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+What is important regarding memory and byte ordering is that performance can be greatly impacted if data requested isn’t aligned in memory according to the byte ordering scheme defined by the architecture. As shown in [Figure 8-17](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0130), memory is either soldered into or plugged into an area on the embedded board, called memory *banks*. While the configuration and number of banks can vary from platform to platform, memory addresses are aligned in an odd or even bank format. If data is aligned in little-endian mode, data taken from address “0” in an even bank is “ABFF,” and as such is an aligned memory access. So, given a 16-bit data bus, only one memory access is needed. But if data were to be taken from address “1” (an odd bank) in a memory aligned as shown in [Figure 8-17](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0130), the little-endian ordering scheme should retrieve “12AB” data. This would require two memory accesses, one to read the AB, the odd byte, and one to read “12,” the even byte, as well as some mechanism within the processor or in driver code to perform additional work to align them as “12AB.” Accessing data in memory that is aligned according to the byte ordering scheme can result in access times at least twice as fast.
+
+Finally, how memory is actually accessed by the software will, in the end, depend on the programming language used to write the software. For example, assembly language has various architecture-specific addressing modes that are unique to an architecture and Java allows modifications of memory through objects.
+
+### 8.2.1 MEMORY MANAGEMENT DEVICE DRIVER PSEUDOCODE EXAMPLES
+
+The following pseudocode demonstrates implementation of various memory management routines on the MPC860, specifically startup, disable, enable, and writing/erasing functions in reference to the architecture. These examples demonstrate how memory management can be implemented on a more complex architecture, and this in turn can serve as a guide to understanding how to write memory management drivers on other processors that are as complex or less complex than the MPC860 architecture.
+
+#### Memory Subsystem Startup (Initialization) on MPC860
+
+In the sample memory map in [Figure 8-18](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0135), the first two banks are 8 MB of Flash, then 4 MB of DRAM, followed by 1 MB for the internal memory map and control/status registers. The remainder of the map represents 4 MB of an additional PCMCIA card. The main memory subsystem components that are initialized in this example are the physical memory chips themselves (i.e., Flash, DRAM) which in the case of the MPC860 are initialized via a memory controller, configuring the internal memory map (registers and dual-port RAM), as well as configuring the MMU.
+
+![image](Referencias/F00008Xf08-18-9780123821966.jpg)
+
+**Figure 8-18** Sample Memory Map.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+##### Initializing the Memory Controller and Connected ROM/RAM
+
+The MPC860 memory controller (shown in [Figure 8-19](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0140)) is responsible for the control of up to eight memory banks, interfacing to SRAM, EPROM, Flash EPROM, various DRAM devices, and other peripherals (i.e., PCMCIA). Thus, in this example of the MPC860, on-board memory (Flash, SRAM, DRAM, etc.) is initialized by initializing the memory controller.
+
+![image](Referencias/F00008Xf08-19-9780123821966.jpg)
+
+**Figure 8-19** MPC860 Integrated Memory Controller.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+The memory controller has two different types of subunits, the general-purpose chip-select machine (GPCM) and the user-programmable machines (UPMs); these subunits exist to connect to certain types of memory. The GPCM is designed to interface to SRAM, EPROM, Flash EPROM, and other peripherals (such as PCMCIA), whereas the UPMs are designed to interface to a wide variety of memory, including DRAMs. The pinouts of the MPC860’s memory controller reflect the different signals that connect these subunits to the various types of memory (see [Figures 8-20a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0145)–c). For every chip select (CS), there is an associated memory bank.
+
+![image](Referencias/F00008Xf08-20a-9780123821966.jpg)
+
+**Figure 8-20a** Memory Controller Pins.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+![image](Referencias/F00008Xf08-20b-9780123821966.jpg)
+
+**Figure 8-20b** PowerPC Connected to SRAM.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+![image](Referencias/F00008Xf08-20c-9780123821966.jpg)
+
+**Figure 8-20c** PowerPC Connected to DRAM.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+With every new access request to external memory, the memory controller determines whether the associated address falls into one of the eight address ranges (one for each bank) defined by the eight base registers (which specify the start address of each bank) and option registers (which specify the bank length) pairs (see [Figure 8-21](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0160)). If it does, the memory access is processed by either the GPCM or one of the UPMs, depending on the type of memory located in the memory bank that contains the desired address.
+
+![image](Referencias/F00008Xf08-21-9780123821966.jpg)
+
+**Figure 8-21** Base and Option Registers.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+Because each memory bank has a pair of base and option registers (BR0/OR0–BR7/OR7), they need to be configured in the memory controller initialization drivers. The base register (BR) fields are made up of a 16-bit start address BA (bits 0-16); AT (bits 17–19) specifies the *address type* (allows sections of memory space to be limited to only one particular type of data), a port size (8-, 16-, 32-bit); a parity checking bit; a bit to write protect the bank (allowing for read-only or read/write access to data); a memory controller machine selection set of bits (for GPCM or one of the UPMs); and a bit indicating if the bank is valid. The option register (OR) fields are made up of bits of control information for configuring the GPCM and UPMs accessing and addressing scheme (burst accesses, masking, multiplexing, etc.).
+
+The type of memory located in the various banks, and connected to the appropriate CS, can then be initialized for access via these registers. So, given the memory map example in [Figure 8-18](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0135), the pseudocode for configuring the first two banks (of 4 MB of Flash each), and the third bank (4 MB of DRAM) would be as follows:
+
+*Note: Length initialized by looking up the length in the table below, and entering 1 s from bit 0 to bit position indicating that length, and entering 0 s into the remaining bits.*
+
+
+
+![Image](Referencias/T00008XtabT0015.jpg)
+
+…
+
+// OR for Bank 0-4 MB of Flash, 0×1FF8 for bits AM (bits 0-16) OR0 = 0×1FF80954;
+
+// Bank 0 - Flash starting at address 0×00000000 for bits BA (bits 0-16), configured for
+
+// GPCM, 32-bit
+
+BR0 = 0×00000001;
+
+// OR for Bank 1-4 MB of Flash, 0×1FF8 for bits AM (bits 0-16) OR1 = 0×1FF80954;
+
+// Bank 1-4 MB of Flash on CS1 starting at address 0×00400000, configured for GPCM,
+
+// 32-bit
+
+BR1 = 0×00400001;
+
+// OR for Bank 2-4 MB of DRAM, 0×1FF8 for bits AM (bits 0-16) OR2 =
+
+// 0×1FF80800; Bank 2-4 MB of DRAM on CS2 starting at address 0×04000000,
+
+// configured for UPMA, 32-bit
+
+BR2 = 0×04000081;
+
+// OR for Bank 3 for BCSR OR3 = 0xFFFF8110; Bank 3 - Board Control and Status
+
+// Registers from address 0×09100000
+
+BR3 = 0×09100001;
+
+…
+
+So, to initialize the memory controller, the base and option registers are initialized to reflect the types of memory in its banks. While no additional GPCM registers need initialization, for memory managed by the UPMA or UPMB, at the very least, the memory periodic timer prescaler register (MPTPR) is initialized for the required refresh timeout (i.e., for DRAM), and the related memory mode register (MAMR or MBMR) for configuring the UPMs needs initialization. The core of every UPM is a (64×32 bit) RAM array that specifies the specific type of accesses (logical values) to be transmitted to the UPM managed memory chips for a given clock cycle. The RAM array is initialized via the memory command register (MCR), which is specifically used during initialization to read from and write to the RAM array, and the memory data register (MDR), which stores the data the MCR uses to write to or read from the RAM array (see sample pseudocode below).[[3\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB3)
+
+…
+
+// set periodic timer prescaler to divide by 8
+
+MPTPR = 0×0800; // 16-bit register
+
+// periodic timer prescaler value for DRAM refresh period (see the PowerPC manual for calculation), timer enable, …
+
+MAMR = 0xC0A21114;
+
+// 64-Word UPM RAM Array content example - the values in this table were generated using the
+
+// UPM860 software available on the Motorola/Freescale Netcomm Web site.
+
+UpmRamARRY:
+
+// 6 WORDS - DRAM 70 ns - single read. (offset 0 in upm RAM)
+
+.long 0×0fffcc24, 0×0fffcc04, 0×0cffcc04, 0×00ffcc04, 0×00ffcc00, 0×37ffcc47
+
+// 2 WORDs - offsets 6-7 not used
+
+.long 0xffffffff, 0xffffffff
+
+// 14 WORDs - DRAM 70 ns - burst read. (offset 8 in upm RAM)
+
+.long 0×0fffcc24, 0×0fffcc04, 0×08ffcc04, 0×00ffcc04, 0×00ffcc08, 0×0cffcc44,
+
+.long 0×00ffec0c, 0×03ffec00, 0×00ffec44, 0×00ffcc08, 0×0cffcc44,
+
+.long 0×00ffec04, 0×00ffec00, 0×3fffec47
+
+// 2 WORDs - offsets 16-17 not used
+
+.long 0xffffffff, 0xffffffff
+
+// 5 WORDs - DRAM 70 ns - single write. (offset 18 in upm RAM)
+
+.long 0×0fafcc24, 0×0fafcc04, 0×08afcc04, 0×00afcc00, 0×37ffcc47
+
+// 3 WORDs - offsets 1d-1 f not used
+
+.long 0xffffffff, 0xffffffff, 0xffffffff
+
+// 10 WORDs - DRAM 70 ns - burst write. (offset 20 in upm RAM)
+
+.long 0×0fafcc24, 0×0fafcc04, 0×08afcc00, 0×07afcc4c, 0×08afcc00, 0×07afcc4c,
+
+.long 0×08afcc00, 0×07afcc4c, 0×08afcc00, 0×37afcc47
+
+// 6 WORDs - offsets 2a-2 f not used
+
+.long 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+
+// 7 WORDs - refresh 70 ns. (offset 30 in upm RAM)
+
+.long 0xe0ffcc84, 0×00ffcc04, 0×00ffcc04, 0×0fffcc04, 0×7fffcc04, 0xffffcc86,
+
+.long 0xffffcc05
+
+// 5 WORDs - offsets 37-3b not used
+
+.long 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+
+// 1 WORD - exception. (offset 3c in upm RAM)
+
+.long 0×33ffcc07
+
+// 3 WORDs - offset 3d-3 f not used
+
+.long 0xffffffff, 0xffffffff, 0×40004650
+
+UpmRAMArrayEnd:
+
+// Write To UPM Ram Array
+
+Index = 0
+
+Loop While Index<64
+
+{
+
+MDR = UPMRamArray[Index]; // store data to MDR
+
+MCR = 0×0000; // issue "Write" command to MCR register to store what is in MDR in RAM Array
+
+Index = Index + 1;
+
+} // end loop
+
+…
+
+##### Initializing the Internal Memory Map on the MPC860
+
+The MPC860’s internal memory map contains the architecture’s special purpose registers (SPRs), as well as dual-port RAM, also referred to as parameter RAM, that contain the buffers of the various integrated components, such as Ethernet or I2C. On the MPC860, it is simply a matter of configuring one of these SPRs, the Internal Memory Map Register (IMMR) shown in [Figure 8-22](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0165), to contain the base address of the internal memory map, as well as some factory-related information on the specific MPC860 processor (part number and mask number).
+
+![image](Referencias/F00008Xf08-22-9780123821966.jpg)
+
+**Figure 8-22** IMMR.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+In the case of the sample memory map used in this section, the internal memory map starts at 0×09000000, so in pseudocode form, the IMMR would be set to this value via the “mfspr” or “mtspr” commands:
+
+mtspr 0×090000FF // the top 16 bits are the address, bits 16-23 are the part number
+
+​    // (0×00 in this example) and bits 24-31 is the mask number
+
+​    // (0xFF in this example).
+
+##### Initializing the MMU on the MPC860
+
+The MPC860 uses the MMUs to manage the board’s virtual memory management scheme, providing logical/effective to physical/real address translations, cache control (instruction MMU and instruction cache, data MMU and data cache), and memory access protections. The MPC860 MMU (shown in [Figure 8-23a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0170)) allows support for a 4 GB uniform (user) address space that can be divided into pages of a variety of sizes, specifically 4 kB, 16 kB, 512 kB, or 8 MB, that can be individually protected and mapped to physical memory.
+
+![image](Referencias/F00008Xf08-23a-9780123821966.jpg)
+
+**Figure 8-23a** TLB within VM Scheme.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+Using the smallest page size a virtual address space can be divided into on the MPC860 (4 kB), a translation table—also commonly referred to as the *memory map* or *page table*—would contain a million address translation entries, one for each 4 kB page in the 4 GB address space. The MPC860 MMU does not manage the entire translation table at one time (in fact, most MMUs do not). This is because embedded boards do not typically have 4 GB of physical memory that needs to be managed at one time. It would be very time consuming for an MMU to update a million entries with every update to virtual memory by the software, and an MMU would need to use a lot of faster (and more expensive) on-chip memory in order to store a memory map of such a size. So, as a result, the MPC860 MMU contains small caches within it to store a subset of this memory map. These caches are referred to as TLBs (shown in [Figure 8-23b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0175)—one instruction and one data) and are part of the MMU’s initialization sequence. In the case of the MPC860, the TLBs are 32-entry and fully associative caches. The entire memory map is stored in cheaper off-chip main memory as a two-level tree of data structures that define the physical memory layout of the board and their corresponding effective memory address.
+
+![image](Referencias/F00008Xf08-23b-9780123821966.jpg)
+
+**Figure 8-23b** TLB.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+The TLB is how the MMU translates (maps) logical/virtual addresses to physical addresses. When the software attempts to access a part of the memory map not within the TLB, a *TLB miss* occurs, which is essentially a trap requiring the system software (through an exception handler) to load the required translation entry into the TLB. The system software that loads the new entry into the TLB does so through a process called a *tablewalk*. This is basically the process of traversing the MPC860’s two-level memory map tree in main memory to locate the desired entry to be loaded in the TLB. The first level of the PowerPC’s multilevel translation table scheme (its translation table structure uses one level 1 table and one or more level 2 tables) refers to a page table entry in the page table of the second level. There are 1024 entries, where each entry is 4 bytes (24 bits) and represents a segment of virtual memory that is 4 MB in size. The format of an entry in the level 1 table is made up of a valid bit field (indicating that the 4 MB respective segment is valid), a level 2 base address field (if valid bit is set, pointer to base address of the level 2 table which represents the associated 4 MB segment of virtual memory), and several attribute fields describing the various attributes of the associated memory segment.
+
+Within each level 2 table, every entry represents the pages of the respective virtual memory segment. The number of entries of a level 2 table depends on the defined virtual memory page size (4 kB, 16 kB, 512 kB, or 8 MB); see [Table 8-1](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#T0010). The larger the virtual memory page size, the less memory used for level 2 translation tables, since there are fewer entries in the translation tables (e.g., a 16 MB physical memory space can be mapped using 2 × 8 MB pages (2048 bytes in the level 1 table and a 2 × 4 in the level 2 table for a total of 2056 bytes) or 4096 × 4 kB pages (2048 bytes in the level 1 table and a 4 × 4096 in the level 2 table for a total of 18 432 bytes)).
+
+**Table 8-1** Level 1 and 2 Entries[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+![Image](Referencias/T00008XtabT0010.jpg)
+
+In the MPC860’s TLB scheme, the desired entry location is derived from the incoming effective memory address. The location of the entry within the TLB sets is specifically determined by the index field(s) derived from the incoming logical memory address. The format of the 32-bit logical (effective) address generated by the PowerPC Core differs depending on the page size. For a 4 kB page, the effective address is made up of a 10-bit level 1 index, a 10-bit level 2 index, and a 12-bit page offset (see [Figure 8-24a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0180)). For a 16 kB page, the page offset becomes 14 bits and the level 2 index is 8-bits (see [Figure 8-24b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0185)). For a 512 kB page, the page offset is 19 bits and the level 2 index is then 3 bits long (see [Figure 8-24c](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0190)); for an 8 MB page, the page offset is 23 bits long, there is no level 2 index, and the level 1 index is 9 bits long (see [Figure 8-24d](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0195)).
+
+![image](Referencias/F00008Xf08-24a-9780123821966.jpg)
+
+**Figure 8-24a** 4 kB Effective Address Format.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+![image](Referencias/F00008Xf08-24b-9780123821966.jpg)
+
+**Figure 8-24b** 16 kB Effective Address Format.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+![image](Referencias/F00008Xf08-24c-9780123821966.jpg)
+
+**Figure 8-24c** 512 kB Effective Address Format.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+![image](Referencias/F00008Xf08-24d-9780123821966.jpg)
+
+**Figure 8-24d** 8 MB Effective Address Format.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+The page offset of the 4 kB effective address format is 12 bits wide to accommodate the offset within the 4 kB (0 × 0000 to 0 × 0FFF) pages. The page offset of the 16 kB effective address format is 14 bits wide to accommodate the offset within the 16 kB (0 × 0000 to 0 × 3FFF) pages. The page offset of the 512 kB effective address format is 19 bits wide to accommodate the offset within the 512 kB (0 × 0000 to 0 × 7FFFF) pages and the page offset of the 8 MB effective address format is 23 bits wide to accommodate the offset within the 8 MB (0×0000 to 0×7FFFF8) pages.
+
+In short, the MMU uses these effective address fields (level 1 index, level 2 index, and offset) in conjunction with other registers, TLB, translation tables, and the tablewalk process to determine the associated physical address (see [Figure 8-25](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0200)).
+
+![image](Referencias/F00008Xf08-25-9780123821966.jpg)
+
+**Figure 8-25** Level 2 Translation Table for 4 kB page Scheme.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+The MMU initialization sequence involves initializing the MMU registers and translation table entries. The initial steps include initializing the MMU Instruction Control Register (MI_CTR) and the Data Control Registers (MD_CTR) shown in [Figures 8-26a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0205) and [b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0210). The fields in both registers are generally the same, most of which are related to memory protection.
+
+![image](Referencias/F00008Xf08-26a-9780123821966.jpg)
+
+**Figure 8-26a** MI_CTR.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-26b-9780123821966.jpg)
+
+**Figure 8-26b** MD_CR.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+Initializing translation table entries is a matter of configuring two memory locations (level 1 and level 2 descriptors), and three register pairs, one for data and one for instructions, in each pair, for a total of six registers. This equals one each of an Effective Page Number (EPN) register, Tablewalk Control (TWC) register, and Real Page Number (RPN) register.
+
+The level 1 descriptor (see [Figure 8-27a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0215)) defines the fields of the level 1 translation table entries, such as the Level 2 Base Address (L2BA), the access protection group, and page size. The level 2 page descriptor (see [Figure 8-27b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0220)) defines the fields of the level 2 translation table entries, such as: the physical page number, page valid bit, and page protection. The registers shown in [Figures 8-27c](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0225)–e are essentially TLB source registers used to load entries into the TLBs. The Effective Page Number (EPN) registers contain the effective address to be loaded into a TLB entry. The Tablewalk Control (TWC) registers contain the attributes of the effective address entry to be loaded into the TLB (page size, access protection, etc.), and the Real Page Number (RPN) registers contain the physical address and attributes of the page to be loaded into the TLB.
+
+![image](Referencias/F00008Xf08-27a-9780123821966.jpg)
+
+**Figure 8-27a** Level 1 Descriptor.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-27b-9780123821966.jpg)
+
+**Figure 8-27b** Level 2 Descriptor.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-27c-9780123821966.jpg)
+
+**Figure 8-27c** Mx-EPN.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-27d-9780123821966.jpg)
+
+**Figure 8-27d** Mx-TWC.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-27e-9780123821966.jpg)
+
+**Figure 8-27e** Mx-RPN.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+An example of an MMU initialization sequence on the MPC860 is pseudocoded below.
+
+// Invalidating TLB entries
+
+tlbia; // the MPC860’s instruction to invalidate entries within the TLBs, also the
+
+ // "tlbie" can be used
+
+// Initializing the MMU Instruction Control Register
+
+…
+
+MI_CTR.fld.all = 0; // clear all fields of register so group protection mode =
+
+ // PowerPC mode, page protection mode is page resolution, etc.
+
+MI_CTR.fld.CIDEF = 1; // instruction cache inhibit default when MMU disabled
+
+…
+
+// Initializing the MMU Data Control Register
+
+…
+
+MD_CTR.fld.all = 0; // clear all fields of register so group protection mode =
+
+ // PowerPC mode, page protection mode is page resolution, etc.
+
+MD_CTR.fld.TWAM = 1; // tablewalk assist mode = 4 kbyte page hardware assist
+
+MD_CTR.fld.CIDEF = 1; // data cache inhibit default when MMU disabled
+
+…
+
+Move to Exception Vector Table the Data and Instruction TLB Miss and Error ISRs *(MMU interrupt vector locations shown in table below)*.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+| Offset (hex) | Interrupt Type                                 |
+| ------------ | ---------------------------------------------- |
+| 01100        | Implementation Dependent Instruction TLB Miss  |
+| 01200        | Implementation Dependent Data TLB Miss         |
+| 01300        | Implementation Dependent Instruction TLB Error |
+| 01400        | Implementation Dependent Data TLB Error        |
+
+
+
+With a TLB miss, an ISR loads the descriptors into the MMU. Data TLB Reload ISR example:
+
+…
+
+// put next code into address, incrementing vector by 4 after each line, i.e., "mtspr
+
+// M_TW, r0"="07CH, 011H, 013H, 0A6H", so put integer 0×7C1113A6H at vector
+
+// 0×1200 and increment vector by 4;
+
+install start of ISR at vector address offset = 0×1200;
+
+// save general purpose register into MMU tablewalk special register
+
+mtspr M_TW, GPR;
+
+mfspr GPR, M_TWB; // load GPR with address of level one descriptor
+
+lwz GPR, (GPR); // load level one page entry
+
+// save level 2 base pointer and level 1 # attributes into DMMU tablewalk control
+
+// register
+
+mtspr MD_TWC, GPR;
+
+// load GPR with level 2 pointer while taking into account the page size
+
+mfspr GPR, MD_TWC;
+
+lwz GPR, (GPR); // load level 2 page entry
+
+mtspr MD_RPN, GPR; // write TLB entry into real page number register
+
+// restore GPR from tablewalk special register return to main execution stream;
+
+mfspr GPR, M_TW;
+
+…
+
+Instruction TLB Reload ISR example:
+
+// put next code into address, incrementing vector by 4 after each line, i.e., "mtspr
+
+// M_TW, r0"="07CH, 011H, 013H, 0A6H", so put integer 0×7C1113A6H at vector
+
+// 0×1100 and increment vector by 4;
+
+install start of ISR at vector address offset = 0×1100;
+
+…
+
+// save general purpose register into MMU tablewalk special register
+
+mtspr M_TW, GPR;
+
+mfspr GPR, SRR0 // load GPR with instruction miss effective address
+
+mtspr MD_EPN, GPR // save instruction miss effective address in MD_EPN
+
+mfspr GPR, M_TWO // load GPR with address of level one descriptor
+
+lwz GPR, (GPR) // load level one page entry
+
+mtspr MI_TWC, GPR // save level one attributes
+
+mtspr MD_TWC, GPR // save level two base pointer
+
+// load R1 with level two pointer while taking into account the page size
+
+mfspr GPR, MD_TWC
+
+lwz GPR, (GPR) // load level two page entry
+
+mtspr MI_RPN, GPR // write TLB entry
+
+mfspr GPR, M_TW // restore R1
+
+return to main execution stream;
+
+// Initialize L1 table pointer and clear L1 table, i.e., MMU tables/TLBs 043F0000-
+
+// 043FFFFF
+
+Level1_Table_Base_Pointer = 0 × 043F0000;
+
+index:= 0;
+
+WHILE ((index MOD 1024) is NOT = 0) DO
+
+Level1 Table Entry at Level1_Table_Base_Pointer + index=0;
+
+index = index + 1;
+
+end WHILE;
+
+…
+
+Initialize translation table entries and map in desired segments in level 1 table and pages in level 2 tables. For example, given the physical memory map in Figure 8-28, the L1 and L2 descriptors would need to be configured for Flash, DRAM, etc.
+
+![image](Referencias/F00008Xf08-28a-9780123821966.jpg)
+
+**Figure 8-28a** Physical Memory Map.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+
+
+// i.e., Initialize entry for and Map in 8 MB of Flash at 0×00000000, adding entry into L1 table, and
+
+// adding a level 2 table for every L1 segment - as shown in [Figure 8-28b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0240), page size is 8 MB, cache is
+
+![image](Referencias/F00008Xf08-28b-9780123821966.jpg)
+
+**Figure 8-28b** L1/L2 Configuration.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+// not inhibited, marked as write-through, used in supervisor mode, read only, and shared.
+
+// 8 MB Flash
+
+…
+
+Level2_Table_Base_Pointer = Level1_Table_Base_Pointer +
+
+size of L1 Table (i.e., 1024);
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.BA = Level2_Table_Base_Pointer;
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.PS = 11b; // page size = 8MB
+
+// Writethrough attribute = 1 writethrough cache policy region
+
+L1desc.fld(Level1_Table_Base_Pointer + L1Index).WT = 1;
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.PS = 1; // page size = 512KB
+
+// level-one segment valid bit = 1 segment valid
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.V = 1;
+
+// for every segment in L1 table, there is an entire level2 table
+
+L2index:=0;
+
+WHILE (L2index<# Pages in L1Table Segment) DO
+
+L2desc[Level2_Table_Base_Pointer + L2index * 4].fld.RPN = physical page number;
+
+L2desc[Level2_Table_Base_Pointer + L2index * 4].fld.CI = 0; // Cache Inhibit Bit = 0
+
+…
+
+L2index = L2index + 1;
+
+end WHILE;
+
+// i.e., Map in 4 MB of DRAM at 0×04000000, as shown in Figure 8-29b, divided into eight,
+
+// 512 KB pages. Cache is enabled, and is in copy-back mode, supervisor mode, supports
+
+// reading and writing, and it is shared.
+
+…
+
+Level2_Table_Base_Pointer = Level2_Table_Base_Pointer +
+
+Size of L2Table for 8MB Flash;
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.BA = Level2_Table_Base_Pointer;
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.PS = 01b; // page size = 512KB
+
+// Writethrough Attribute = 0 copyback cache policy region
+
+L1desc.fld(Level1_Table_Base_Pointer + L1Index).WT = 0;
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.PS = 1; // page size = 512KB
+
+// Level 1 segment valid bit = 1 segment valid
+
+L1desc(Level1_Table_Base_Pointer + L1Index).fld.V = 1;
+
+…
+
+// Initializing Effective Page Number Register
+
+loadMx_EPN(mx_epn.all);
+
+// Initializing the Tablewalk Control Register Descriptor
+
+load Mx_TWC(L1desc.all);
+
+// Initializing the Mx_RPN Descriptor
+
+load Mx_RPN (L2desc.all);
+
+…
+
+At this point the MMU and caches can be enabled (see Memory Subsystem Enable section).
+
+#### Memory Subsystem Disable on MPC860
+
+
+
+// Disable MMU - The MPC860 powers up with the MMUs in disabled mode, but to
+
+// disable translation IR and DR bits need to be cleared.
+
+…
+
+rms msr ir 0; rms msr dr 0; // disable translation
+
+…
+
+// Disable caches
+
+…
+
+// Disable caches (0100b in bits 4-7, IC_CST[CMD] and DC_CST[CMD] registers)
+
+addis r31,r0,0×0400
+
+mtspr DC_CST,r31
+
+mtspr IC_CST,r31
+
+…
+
+#### Memory Subsystem Enable on MPC860
+
+
+
+// Enable MMU via setting IR and DR bits and "mtmsr" command on MPC860
+
+…
+
+ori r3,r3,0×0030; // set the IR and DR bits
+
+mtmsr r3; // enable translation
+
+isync;
+
+…
+
+// Enable caches
+
+…
+
+addis r31,r0,0×0a00 // unlock all in both caches
+
+mtspr DC_CST,r31
+
+mtspr IC_CST,r31
+
+addis r31,r0,0×0c00 // invalidate all in both caches
+
+mtspr DC_CST,r31
+
+mtspr IC_CST,r31
+
+// Enable caches (0010b in bits 4-7, IC_CST[CMD] and DC_CST[CMD] registers)
+
+addis r31,r0,0×0200
+
+mtspr DC_CST,r31
+
+mtspr IC_CST,r31
+
+…
+
+#### Memory Subsystem Writing/Erasing Flash
+
+While reading from Flash is the same as reading from RAM, accessing Flash for writing or erasing is typically much more complicated. Flash memory is divided into blocks, called sectors, where each sector is the smallest unit that can be erased. While Flash chips differ in the process required to perform a write or erase, the general handshaking is similar to the pseudocode examples below for the Am29F160D Flash chip. The Flash erase function notifies the Flash chip of the impending operation, sends the command to erase the sector, and then loops, polling the Flash chip to determine when it completes. At the end of the erase function, the Flash is then set to standard read mode. The write routine is similar to that of the erase function, except the command is transmitted to perform a write to a sector, rather than an erase.
+
+…
+
+// The address at which the Flash devices are mapped
+
+int FlashStartAddress = 0×00000000;
+
+int FlashSize = 0×00800000; // The size of the Flash devices in bytes, i.e., 8MB.
+
+// Flash memory block offset table from the Flash base of the various sectors, as well as
+
+// the corresponding sizes.
+
+BlockOffsetTable={{ 0×00000000, 0×00008000 }, { 0×00008000, 0×00004000 },
+
+ { 0×0000C000, 0×00004000 }, { 0×00010000, 0×00010000 },
+
+ { 0×00020000, 0×00020000 }, { 0×00040000, 0×00020000 },
+
+ { 0×00060000, 0×00020000 }, { 0×00080000, 0×00020000 }, …};
+
+// Flash write pseudocode example
+
+FlashErase (int startAddress, int offset) {
+
+ …
+
+ // Erase sector commands
+
+ Flash [startAddress + (0×0555 << 2)] = 0×00AA00AA; // unlock 1 Flash command
+
+ Flash [startAddress + (0×02AA << 2)] = 0×00550055; // unlock 2 Flash command
+
+ Flash [startAddress + (0×0555 << 2)] = 0×00800080); // erase setup Flash command
+
+ Flash [startAddress + (0×0555 << 2)] = 0×00AA00AA; // unlock 1 Flash command
+
+ Flash [startAddress + (0×02AA << 2)] = 0×00550055; // unlock 2 Flash command
+
+ Flash [startAddress + offset] = 0×00300030; // set Flash sector erase command
+
+ // Poll for completion: avg. block erase time is 700 ms, worst-case block erase time
+
+ // is 15 s
+
+ int poll;
+
+ int loopIndex = 0;
+
+ while (loopIndex < 500) {
+
+ for (int i = 0; i<500 * 3000; i++);
+
+ poll = Flash(startAddr + offset);
+
+ if ((poll AND 0×00800080) = 0×00800080 OR
+
+ (poll AND 0×00200020) = 0×00200020) {
+
+ exit loop;
+
+ }
+
+ loopIndex++;
+
+ }
+
+ // exit
+
+ Flash (startAddr) = 0×00F000F0; // read reset command
+
+ Flash(startAddr + offset) == 0xFFFFFFFF;
+
+}
+
+## 8.3 Example 3: On-Board Bus Device Drivers
+
+As discussed in [Chapter 7](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP007.html#CHP007), associated with every bus is/are (1) some type of *protocol* that defines how devices gain access to the bus (arbitration), (2) the rules attached devices must follow to communicate over the bus (handshaking), and (3) the signals associated with the various bus lines. Bus protocol is supported by the bus device drivers, which commonly include all or some combination of all of the 10 functions from the list of device driver functionality introduced at the start of this chapter, including:
+
+• *Bus Startup*: initialization of the bus upon PowerON or reset.
+
+• *Bus Shutdown*: configuring bus into its PowerOFF state.
+
+• *Bus Disable*: allowing other software to disable bus on-the-fly.
+
+• *Bus Enable*: allowing other software to enable bus on-the-fly.
+
+• *Bus Acquire*: allowing other software to gain singular (locking) access to bus.
+
+• *Bus Release*: allowing other software to free (unlock) bus.
+
+• *Bus Read*: allowing other software to read data from bus.
+
+• *Bus Write*: allowing other software to write data to bus.
+
+• *Bus Install*: allowing other software to install new bus device on-the-fly for expandable buses.
+
+• *Bus Uninstall*: allowing other software to remove installed bus device on-the-fly for expandable buses.
+
+Which of the routines are implemented and how they are implemented depends on the actual bus. The pseudocode below is an example of an I2C bus initialization routine provided as an example of a bus startup (initialization) device driver on the MPC860.
+
+### 8.3.1 ON-BOARD BUS DEVICE DRIVER PSEUDOCODE EXAMPLES
+
+The following pseudocode gives an example of implementing a bus initialization routine on the MPC860, specifically the startup function in reference to the architecture. These examples demonstrate how bus management can be implemented on a more complex architecture, and this can be used as a guide to understand how to write bus management drivers on other processors of equal or lesser complexity than the MPC860 architecture. Other driver routines have not been pseudocoded, because the same concepts apply here as in [Sections 8.1](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#S0010) and [8.2](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#S0060)—essentially, looking in the architecture and bus documentation for the mechanisms that enable a bus, disable a bus, acquire a bus, etc.
+
+#### I2C Bus Startup (Initialization) on the MPC860
+
+The I2C (inter-IC) protocol is a serial bus with one serial data line (SDA) and one serial clock line (SCL). With the I2C protocol, all devices attached to the bus have a unique address (identifier), and this identifier is part of the data stream transmitted over the SDL line.
+
+The components on the master processor that support the I2C protocol are what need initialization. In the case of the MPC860, there is an integrated I2C controller on the master processor (see [Figure 8-29](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0245)). The I2C controller is made up transmitter registers, receiver registers, a baud rate generator, and a control unit. The baud rate generator generates the clock signals when the I2C controller acts as the I2C bus master—if in slave mode, the controller uses the clock signal received from the master. In reception mode, data is transmitted from the SDA line into the control unit, through the shift register, which in turn transmits the data to the receive data register. The data that will be transmitted over the I2C bus from the PPC is initially stored in the transmit data register and transferred out through the shift register to the control unit and over the SDA line. Initializing the I2C bus on the MPC860 means initializing the I2C SDA and SCL pins, many of the I2C registers, some of the parameter RAM, and the associated buffer descriptors.
+
+![image](Referencias/F00008Xf08-29-9780123821966.jpg)
+
+**Figure 8-29** I2C Controller on MPC860.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+The MPC860 I2C SDA and SCL pins are configured via the Port B general purpose I/O port (see [Figures 8-30a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0250) and [b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0255)). Because the I/O pins can support multiple functions, the specific function a pin will support needs to be configured via port B’s registers (shown in [Figure 8-30c](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0260)). Port B has four read/write (16-bit) control registers: the Port B Data Register (PBDAT), the Port B Open Drain Register (PBODR), the Port B Direction Register (PBDIR), and the Port B Pin Assignment Register (PBPAR). In general, the PBDAT register contains the data on the pin, the PBODR configures the pin for open drain or active output, the PBDIR configures the pin as either an input or output pin, and the PBPAR assigns the pin its function (I2C, general purpose I/O, etc.).
+
+![image](Referencias/F00008Xf08-30a-9780123821966.jpg)
+
+**Figure 8-30a** SDA and SCL pins on MPC860.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+![image](Referencias/F00008Xf08-30b-9780123821966.jpg)
+
+**Figure 8-30b** MPC860 Port B Pins.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+![image](Referencias/F00008Xf08-30c-9780123821966.jpg)
+
+**Figure 8-30c** MPC860 Port B Register.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+An example of initializing the SDA and SCL pins on the MPC860 is given in the pseudocode below.
+
+…
+
+immr = immr & 0xFFFF0000; // MPC8xx internal register map
+
+// Configure Port B pins to enable SDA and SCL
+
+immr->pbpar=(pbpar) OR (0×00000030); // set to dedicated I2C
+
+immr->pbdir=(pbdir) OR (0×00000030); // enable I2CSDA and I2CSCL as outputs
+
+…
+
+The I2C registers that need initialization include the I2C Mode Register (I2MOD), I2C Address Register (I2ADD), the Baud Rate Generator Register (I2BRG), the I2C Event Register (I2CER), and the I2C Mask Register (I2CMR) shown in [Figures 8-31a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0265)–e).
+
+![image](Referencias/F00008Xf08-31a-9780123821966.jpg)
+
+**Figure 8-31a** I2MOD.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-31b-9780123821966.jpg)
+
+**Figure 8-31b** I2ADD.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-31c-9780123821966.jpg)
+
+**Figure 8-31c** I2BRG.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-31d-9780123821966.jpg)
+
+**Figure 8-31d** I2CER.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-31e-9780123821966.jpg)
+
+**Figure 8-31e** I2CMR.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+An example of I2C register initialization pseudocode is as follows:
+
+/* I2C Registers Initialization Sequence */
+
+…
+
+// Disable I2C before initializing it, LSB character order for transmission and reception,
+
+// I2C clock not filtered, clock division factor of 32, etc.
+
+immr->i2mod = 0×00;
+
+immr->i2add = 0×80; // I2C MPC860 address = 0×80
+
+immr->i2brg = 0×20; // divide ratio of BRG divider
+
+immr->i2cer = 0×17; // clear out I2C events by setting relevant bits to "1"
+
+immr->i2cmr = 0×17; // enable interrupts from I2C in corresponding I2CER
+
+immr->i2mod = 0×01; // enable I2C bus
+
+…
+
+Five of the 15 field I2C parameter RAM need to be configured in the initialization of I2C on the MPC860. They include the receive function code register (RFCR), the transmit function code register (TFCR), and the maximum receive buffer length register (MRBLR), the base value of the receive buffer descriptor array (Rbase), and the base value of the transmit buffer descriptor array (Tbase) shown in [Figure 8-32](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0290).
+
+![image](Referencias/F00008Xf08-32-9780123821966.jpg)
+
+**Figure 8-32** I2C Parameter RAM.[[4\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB4)
+
+See the following pseudocode for an example of I2C parameter RAM initialization:
+
+// I2C Parameter RAM Initialization
+
+…
+
+// specifies for reception big endian or true little endian byte ordering and channel # 0
+
+immr->I2Cpram.rfcr = 0×10;
+
+// specifies for reception big endian or true little endian byte ordering and channel # 0
+
+immr->I2Cpram.tfcr = 0×10;
+
+immr->I2Cpram.mrblr = 0×0100; // the maximum length of I2C receive buffer
+
+immr->I2Cpram.rbase = 0×0400; // point RBASE to first RX BD
+
+immr->I2Cpram.tbase = 0×04F8; // point TBASE to TX BD
+
+…
+
+Data to be transmitted or received via the I2C controller (within the CPM of the PowerPC) is input into buffers which the transmit and receive buffer descriptors refer to. The first half word (16 bits) of the transmit and receive buffer contain status and control bits (as shown in [Figures 8-33a](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0295) and [b](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0300)). The next 16 bits contain the length of the buffer.
+
+![image](Referencias/F00008Xf08-33a-9780123821966.jpg)
+
+**Figure 8-33a** Receive Buffer Descriptor.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+![image](Referencias/F00008Xf08-33b-9780123821966.jpg)
+
+**Figure 8-33b** Transmit Buffer Descriptor.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+In both buffers the Wrap (W) bit indicates whether this buffer descriptor is the final descriptor in the buffer descriptor table (when set to 1, the I2C controller returns to the first buffer in the buffer descriptor ring). The Interrupt (I) bit indicates whether the I2C controller issues an interrupt when this buffer is closed. The Last bit (L) indicates whether this buffer contains the last character of the message. The CM bit indicates whether the I2C controller clears the Empty (E) bit of the reception buffer or Ready (R) bit of the transmission buffer when it is finished with this buffer. The Continuous Mode (CM) bit refers to continuous mode in which, if a single buffer descriptor is used, continuous reception from a slave I2C device is allowed.
+
+In the case of the transmission buffer, the Ready (R) bit indicates whether the buffer associated with this descriptor is ready for transmission. The Transmit Start Condition (S) bit indicates whether a start condition is transmitted before transmitting the first byte of this buffer. The NAK bit indicates that the I2C aborted the transmission because the last transmitted byte did not receive an acknowledgement. The Under-run Condition (UN) bit indicates that the controller encountered an under-run condition while transmitting the associated data buffer. The Collision (CL) bit indicates that the I2C controller aborted transmission because the transmitter lost while arbitrating for the bus. In the case of the reception buffer, the Empty (E) bit indicates if the data buffer associated with this buffer descriptor is empty and the Over-run (OV) bit indicates whether an overrun occurred during data reception.
+
+An example of I2C buffer descriptor initialization pseudocode would look as follows:
+
+// I2C Buffer Descriptor Initialization
+
+…
+
+// 10 reception buffers initialized
+
+index = 0;
+
+While (index < 9) do
+
+{
+
+// E = 1, W = 0, I = 1, L = 0, OV = 0
+
+immr->udata_bd ->rxbd[index].cstatus = 0×9000;
+
+immr->bd ->rxbd[index].length = 0; // buffer empty
+
+immr->bd ->rxbd[index].addr=…
+
+index = index+1;
+
+}
+
+// last receive buffer initialized
+
+immr->bd->rxbd[9].cstatus = 0xb000; // E = 1, W = 1, I = 1, L = 0, OV = 0
+
+immr->bd ->rxbd[9].length = 0; // buffer empty
+
+immr->udata_bd ->rxbd[9].addr=…;
+
+// transmission buffer
+
+immr->bd ->txbd.length = 0×0010; // transmission buffer 2 bytes long
+
+// R = 1, W = 1, I = 0, L = 1, S = 1, NAK = 0, UN = 0, CL = 0
+
+immr->bd->txbd.cstatus = 0xAC00;
+
+immr->udata_bd ->txbd.bd_addr=…;
+
+/* Put address and message in TX buffer */
+
+…
+
+// Issue Init RX & TX Parameters Command for I2C via CPM command register CPCR.
+
+while(immr->cpcr & (0×0001)); // loop until ready to issue command
+
+immr->cpcr=(0×0011);  // issue command
+
+while(immr->cpcr & (0×0001)); // loop until command processed
+
+…
+
+## 8.4 Board I/O Driver Examples
+
+The board I/O subsystem components that require some form of software management include the components integrated on the master processor, as well as an I/O slave controller, if one exists. The I/O controllers have a set of status and control registers used to control the processor and check on its status. Depending on the I/O subsystem, commonly all or some combination of all of the 10 functions from the list of device driver functionality introduced at the start of this chapter are typically implemented in I/O drivers, including:
+
+• *I/O Startup*: initialization of the I/O upon PowerON or reset.
+
+• *I/O Shutdown*: configuring I/O into its PowerOFF state.
+
+• *I/O Disable*: allowing other software to disable I/O on-the-fly.
+
+• *I/O Enable*: allowing other software to enable I/O on-the-fly.
+
+• *I/O Acquire*: allowing other software gain singular (locking) access to I/O.
+
+• *I/O Release*: allowing other software to free (unlock) I/O.
+
+• *I/O Read*: allowing other software to read data from I/O.
+
+• *I/O Write*: allowing other software to write data to I/O.
+
+• *I/O Install*: allowing other software to install new I/O on-the-fly.
+
+• *I/O Uninstall*: allowing other software to remove installed I/O on-the-fly.
+
+The Ethernet and RS232 I/O initialization routines for the PowerPC and ARM architectures are provided as examples of I/O startup (initialization) device drivers. These examples are to demonstrate how I/O can be implemented on more complex architectures, such as PowerPC and ARM, and this in turn can be used as a guide to understand how to write I/O drivers on other processors that are as complex or less complex than the PowerPC and ARM architectures. Other I/O driver routines were not pseudocoded in this chapter, because the same concepts apply here as in [Sections 8.1](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#S0010) and [8.2](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#S0060). In short, it is up to the responsible developer to study the architecture and I/O device documentation for the mechanisms used to read from an I/O device, write to an I/O device, enable an I/O device, etc.
+
+### 8.4.1 EXAMPLE 4: INITIALIZING AN ETHERNET DRIVER
+
+Continuing the networking example from [Chapter 6](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP006.html#CHP006), the example used here will be the widely implemented LAN protocol Ethernet, which is primarily based upon the IEEE 802.3 family of standards.
+
+As shown in [Figure 8-34](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0305), the software required to enable Ethernet functionality maps to the lower section of the OSI (Open Systems Interconnection) data-link layer. The hardware components can all be mapped to the physical layer of the OSI model, but will not be discussed in this section (see [Section II](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/ITR003.html#ITR003)).
+
+![image](Referencias/F00008Xf08-34-9780123821966.jpg)
+
+**Figure 8-34** OSI Model.
+
+As mentioned in [Section II](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/ITR003.html#ITR003), the Ethernet component that can be integrated onto the master processor is called the *Ethernet Interface*. The only firmware (software) that is implemented is in the Ethernet interface. The software is dependent on how the hardware supports two main components of the IEEE802.3 Ethernet protocol: the *media access management* and *data encapsulation*.
+
+#### Data Encapsulation (Ethernet Frame)
+
+In an Ethernet LAN, all devices connected via Ethernet cables can be set up as a bus or star topology (see [Figure 8-35](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0310)).
+
+![image](Referencias/F00008Xf08-35-9780123821966.jpg)
+
+**Figure 8-35** Ethernet Topologies.
+
+In these topologies, all devices share the same signaling system. After a device checks for LAN activity and determines after a certain period there is none, the device then transmits its Ethernet signals serially. The signals are then received by all other devices attached to the LAN—thus the need for an “Ethernet frame,” which contains the data as well as the information needed to communicate to each device which device the data is actually intended for.
+
+Ethernet devices encapsulate data they want to transmit or receive into what are called “Ethernet frames.” The Ethernet frame (as defined by IEEE 802.3) is made of up a series of bits, each grouped into fields. Multiple Ethernet frame formats are available, depending on the features of the LAN. Two such frames (see the IEEE 802.3 specification for a description of all defined frames) are shown in [Figure 8-36](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0315).
+
+![image](Referencias/F00008Xf08-36-9780123821966.jpg)
+
+**Figure 8-36** Ethernet Frames.[[7\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB7)
+
+The *preamble* bytes tell devices on the LAN that a signal is being sent. They are followed by “10101011” to indicate the *start* of a *frame*. The *media access control (MAC) addresses* in the Ethernet frame are physical addresses unique to each Ethernet interface in a device, so every device has one. When the frame is received by a device, its data-link layer looks at the destination address of the frame. If the address doesn’t match its own MAC address, the device disregards the rest of the frame.
+
+The *Data* field can vary in size. If the data field is less than or equal to 1500 then the *Length/Type* field indicates the number of bytes in the data field. If the data field is greater than 1500, then the type of MAC protocol used in the device that sent the frame is defined in Length/Type. While the data field size can vary, the MAC Addresses, the Length/Type, the Data, Pad, and Error checking fields must add up to be at least 64 bytes long. If not, the *Pad* field is used to bring up the frame to its minimum required length.
+
+The *Error checking* field is created using the MAC Addresses, Length/Type, Data Field, and Pad fields. A 4-byte *CRC (cyclical redundancy check)* value is calculated from these fields and stored at the end of the frame before transmission. At the receiving device, the value is recalculated, and, if it doesn’t match, the frame is discarded.
+
+Finally, remaining frame formats in the Ethernet specification are extensions of the basic frame. The VLAN (virtual local-area network) tagging frame shown above is an example of one of these extended frames, and contains two additional fields: *802.1Q tag type* and *Tag Control Information*. The *802.1Q tag type* is always set to 0×8100 and serves as an indicator that there is a VLAN tag following this field, and not the Length/Type field, which in this format is shifted 4-bytes over within the frame. The *Tag Control Information* is actually made up of three fields: the *user priority field* (UPF), the *canonical format indicator* (CFI), and the *VLAN identifier* (VID). The UPF is a 3-bit field that assigns a priority level to the frame. The CFI is a 1-bit field to indicate whether there is a Routing Information Field (RIF) in the frame, while the remaining 12 bits is the VID, which identifies which VLAN this frame belongs to. Note that while the VLAN protocol is actually defined in the IEEE 802.1Q specification, it’s the IEEE 802.3ac specification that defines the Ethernet-specific implementation details of the VLAN protocol.
+
+#### Media Access Management
+
+Every device on the LAN has an equal right to transmit signals over the medium, so there have to be rules that ensure every device gets a fair chance to transmit data. Should more than one device transmit data at the same time, these rules must also allow the device a way to recover from the data colliding. This is where the two MAC protocols come in: the IEEE 802.3 *Half-Duplex* Carrier Sense Multiple Access/Collision Detect (CDMA/CD) and the IEEE 802.3x *Full-Duplex Ethernet* protocols. These protocols, implemented in the Ethernet interface, dictate how these devices behave when sharing a common transmission medium.
+
+Half-Duplex CDMA/CD capability in an Ethernet device means that a device can either receive or transmit signals over the same communication line, but not do both (transmit and receive) at the same time. Basically, a Half-Duplex CDMA/CD (also known as the MAC sublayer) in the device can both transmit and receive data, from a higher layer or from the physical layer in the device. In other words, the MAC sublayer functions in two modes: transmission (data received from higher layer, processed, then passed to physical layer) or reception (data received from physical layer, processed, then passed to higher layer). The transmit data encapsulation (TDE) component and the transmit media access management (TMAM) components provide the transmission mode functionality, while the receive media access management (RMAM) and the receive data decapsulation (RDD) components provide the reception mode functionality.
+
+#### CDMA/CD (MAC Sublayer) Transmission Mode
+
+When the MAC sublayer receives data from a higher layer to transmit to the physical layer, the TDE component first creates the Ethernet frame, which is then passed to the TMAM component. Then, the TMAM component waits for a certain period of time to ensure the transmission line is quiet, and that no other devices are currently transmitting. When the TMAM component has determined that the transmission line is quiet, it transmits (via the physical layer) the data frame over the transmission medium, in the form of bits, one bit at a time (serially). If the TMAM component of this device learns that its data has collided with other data on the transmission line, it transmits a series of bits for a predefined period to let all devices on the system know that a collision has occurred. The TMAM component then stops all transmission for another period of time, before attempting to retransmit the frame again.
+
+[Figure 8-37](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0320) shows a high-level flow chart of the MAC layer processing a MAC client’s (an upper layer) request to transmit a frame.
+
+![image](Referencias/F00008Xf08-37-9780123821966.jpg)
+
+**Figure 8-37** High-Level Flow Chart of MAC Layer Processing a MAC Client’s request to Transmit a Frame.[[7\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB7)
+
+#### CDMA/CD (MAC Sublayer) Reception Mode
+
+When the MAC sublayer receives the stream of bits from the physical layer, to be later transmitted to a MAC client, the MAC sublayer RMAM component receives these bits from the physical layer as a “frame.” Note that, as the bits are being received by the RMAM component, the first two fields (preamble and start frame delimiter) are disregarded. When the physical layer ceases transmission, the frame is then passed to the RDD component for processing. It is this component that compares the MAC Destination Address field in this frame to the MAC Address of the device. The RDD component also checks to ensure the fields of the frame are properly aligned, and executes the CRC Error Checking to ensure the frame wasn’t damaged en route to the device (the Error Checking field is stripped from the frame). If everything checks out, the RDD component then transmits the remainder of the frame, with an additional status field appended, to the MAC Client.
+
+[Figure 8-38](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0325) shows a high-level flow chart of the MAC layer processing incoming bits from the physical layer:
+
+![image](Referencias/F00008Xf08-38-9780123821966.jpg)
+
+**Figure 8-38** High-Level Flow Chart of MAC Layer Processing incoming bits from the Physical Layer.[[7\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB7)
+
+It is not uncommon to find that half-duplex capable devices are also full-duplex capable. This is because only a subset of the MAC sublayer protocols implemented in half-duplex are needed for full-duplex operation. Basically, a full-duplex capable device can receive and transmit signals over the same communication media line at the same time. Thus, the throughput in a full-duplex LAN is double that of a half-duplex system.
+
+The transmission medium in a full-duplex system must also be capable of supporting simultaneous reception and transmission without interference. For example, 10Base-5, 10Base-2, 10Base-FX, etc., are cables that *do not* support full-duplex, while 10/100/1000Base-T, 100Base-FX, etc., meet full-duplex media specification requirements.
+
+Full-duplex operation in a LAN is restricted to connecting only two devices, and both devices must be capable and configured for full duplex operation. While it is restricting to only allow point to point links, the efficiency of the link in a full-duplex system is actually improved. Having only two devices eliminates the potential for collisions, and eliminates any need for the CDMA/CD algorithms implemented in a half-duplex capable device. Thus, while the reception algorithm is the same for both full and half duplex, [Figure 8-39](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0330) flowcharts the high-level functions of full-duplex in transmission mode.
+
+![image](Referencias/F00008Xf08-39-9780123821966.jpg)
+
+**Figure 8-39** Flow Chart of High-Level Functions of Full-Duplex in Transmission Mode.[[7\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB7)
+
+Now that you have a definition of all components (hardware and software) that make up an Ethernet system, let’s take a look at how architecture-specific Ethernet components are implemented via software on various reference platforms.
+
+#### Motorola/Freescale MPC823 Ethernet Example
+
+[Figure 8-40](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0335) is a diagram of a MPC823 connected to Ethernet hardware components on the board (see [Section II](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/ITR003.html#ITR003) for more information on Ethernet hardware components).
+
+![image](Referencias/F00008Xf08-40-9780123821966.jpg)
+
+**Figure 8-40** MPC823 Ethernet Block Diagram.[[2\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB2)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+A good starting point for understanding how Ethernet runs on a MPC823 is section 16 in the 2000 MPC823 User’s Manual on the MPC823 component that handles networking and communications, called the CPM (Communication Processor Module). It is here that we learn that configuring the MPC823 to implement Ethernet is done through serial communication controllers (SCCs).
+
+
+
+*16.9 THE SERIAL COMMUNICATION CONTROLLERS*
+
+The MPC823 has two serial communication controllers (SCC2 and SCC3) that can be configured independently to implement different protocols. They can be used to implement bridging functions, routers, and gateways, and interface with a wide variety of standard WANs, LANs, and proprietary networks …
+
+The serial communication controllers do not include the physical interface, but they form the logic that formats and manipulates the data obtained from the physical interface. Many functions of the serial communication controllers are common to (among other protocols) the Ethernet controller. The serial communication controllers’ main features include support for full 10 Mbps Ethernet/IEEE 802.3.
+
+Section 16.9.22 in the MPC823 User’s Manual discusses in detail the features of the Serial Communication Controller in Ethernet mode, including full-duplex operation support. In fact, what actually needs to be implemented in software to initialize and configure Ethernet on the PPC823 can be based on the Ethernet programming example in section 16.9.23.7.
+
+
+
+*16.9.23.7 SCC2 ETHERNET PROGRAMMING EXAMPLE*
+
+The following is an example initialization sequence for the SCC2 in Ethernet mode. The CLK1 pin is used for the Ethernet receiver and the CLK2 pin is used for the transmitter.
+
+\1. Configure the port A pins to enable the TXD1 and RXD1 pins. Write PAPAR bits 12 and 13 with ones, PADIR bits 12 and 13 with zeros, and PAODR bit 13 with zero.
+
+\2. Configure the Port C pins to enable CTS2(CLSN) and CD2 (RENA). Write PCPAR and PCDIR bits 9 and 8 with zeros and PCSO bits 9 and 8 with ones.
+
+\3. Do not enable the RTS2(TENA) pin yet because the pin is still functioning as RTS and transmission on the LAN could accidentally begin.
+
+\4. Configure port A to enable the CLK1 and CLK2 pins. Write PAPAR bits 7 and 6 with ones and PADIR bits 7 and 6 with zeros.
+
+\5. Connect the CLK1 and CLK2 pins to SCC2 using the serial interface. Write the R2CS field in the SICR to 101 and the T2CS field to 100.
+
+\6. Connect SCC2 to the NMSI and clear the SC2 bit in the SICR.
+
+\7. Initialize the SDMA configuration register (SDCR) to 0×0001.
+
+\8. Write RBASE and TBASE in the SCC2 parameter RAM to point to the RX buffer descriptor and TX buffer descriptor in the dual-port RAM. Assuming one RX buffer descriptor at the beginning of dual-port RAM and one TX buffer descriptor following that RX buffer descriptor, write RBASE with 0×2000 and TBASE with 0×2008.
+
+\9. Program the CPCR to execute the INIT RX BD PARAMETER command for this channel.
+
+\10. Write RFCR and TFCR with 0×18 for normal operation.
+
+\11. Write MRBLR with the maximum number of bytes per receive buffer. For this case assume 1,520 bytes, so MRBLR = 0×05F0. In this example, the user wants to receive an entire frame into one buffer, so the MRBLR value is chosen to be the first value larger than 1,518 that is evenly divisible by four.
+
+\12. Write C_PRES with 0xFFFFFFFF to comply with 32-bit CCITT-CRC.
+
+\13. Write C_MASK with 0xDEBB20E3 to comply with 32-bit CDITT-CRC.
+
+\14. Clear CRCEC, ALEC, and DISFC for clarity.
+
+\15. Write PAD with 0×8888 for the pad value.
+
+\16. Write RET_LIM with 0×000F.
+
+\17. Write MFLR with 0×05EE to make the maximum frame size 1,518 bytes.
+
+\18. Write MINFLR with 0×0040 to make the minimum frame size 64 bytes.
+
+\19. Write MAXD1 and MAXD2 with 0×005EE to make the maximum DMA count 1,518 bytes.
+
+\20. Clear GADDR1–GADDR4. The group hash table is not used.
+
+\21. Write PADDR1_H with 0×0380, PADDR1_M with 0×12E0, and PADDR1_L with 0×5634 to configure the physical address 8003E0123456.
+
+\22. Write P_Per with 0×000. It is not used.
+
+\23. Clear IADDR1–IADDR4. The individual hash table is not used.
+
+\24. Clear TADDR_H, TADDR_M, and TADDR_L for clarity.
+
+\25. Initialize the RX buffer descriptor and assume the RX data buffer is at 0×00001000 main memory. Write 0xB000 to Rx_BD_Status, 0×0000 to Rx_BD_Length (optional) and 0×00001000 to Rx_BD_Pointer.
+
+\26. Initialize the TX buffer descriptor and assume the TX data frame is at 0×00002000 main memory and contains fourteen 8-bit characters (destination and source addresses plus the type field). Write 0xFC00 to Tx_BD_Status, add PAD to the frame and generate a CRC. Then write 0×000D to Tx_BD_Length and 0×00002000to Tx_BD_Pointer.
+
+\27. Write 0xFFFF to the SCCE-Ethernet to clear any previous events.
+
+\28. Write 0×001A to the SCCM-Ethernet to enable the TXE, RXF, and TXB interrupts.
+
+\29. Write 0×20000000 to the CIMR so that SCC2 can generate a system interrupt. The CICR must also be initialized.
+
+\30. Write 0×00000000 to the GSMR_H to enable normal operation of all modes.
+
+\31. Write 0×1088000C to the GSMR_L to configure the CTS2 (CLSN) and CD2 (RENA) pins to automatically control transmission and reception (DIAG field) and the Ethernet mode. TCI is set to allow more setup time for the EEST to receive the MPC82 transmit data. TPL and TPP are set for Ethernet requirements. The DPLL is not used with Ethernet. Notice that the transmitter (ENT) and receiver (ENR) have not been enabled yet.
+
+\32. Write 0xD555 to the DSR.
+
+\33. Set the PSMR-SCC Ethernet to 0×0A0A to configure 32-bit CRC, promiscuous mode and begin searching for the start frame delimiter 22 bits after RENA.
+
+\34. Enable the TENA pin (RTS2). Since the MODE field of the GMSR_L is written to Ethernet, the TENA signal is low. Write PCPAR bit 14 with a one and PCDIR bit 14 with a zero.
+
+\35. Write 0×1088003C to the GSMR_L register to enable the SCC2 transmitter and receiver. This additional write ensures that the ENT and ENR bits are enabled last.
+
+NOTE: After 14 bytes and the 46 bytes of automatic pad (plus the 4 bytes of CRC) are transmitted, the TX buffer descriptor is closed. Additionally, the receive buffer is closed after a frame is received. Any data received after 1,520 bytes or a single frame causes a busy (out-of-buffer) condition since only one RX buffer descriptor is prepared.
+
+It is from section 16.9.23.7 that the Ethernet initialization device driver source code can be written. It is also from this section that it can be determined how Ethernet on the MPC823 is configured to be *interrupt driven*. The actual initialization sequence can be divided into seven major functions: disabling SCC2, configuring ports for Ethernet transmission and reception, initializing buffers, initializing parameter RAM, initializing interrupts, initializing registers, and starting Ethernet (see pseudocode below).
+
+MPC823 Ethernet Driver Pseudocode
+
+// disabling SCC2
+
+ // Clear GSMR_L[ENR] to disable the receiver
+
+ GSMR_L = GSMR_L & 0×00000020
+
+ // Issue Init Stop TX Command for the SCC
+
+ Execute Command (GRACEFUL_STOP_TX)
+
+ // clear GSLM_L[ENT] to indicate that transmission has stopped
+
+ GSMR_L = GSMR_L & 0×00000010
+
+-=-=-=-=
+
+// Configure port A to enable TXD1 and RXD1 - step 1 from user’s manual
+
+PADIR = PADIR & 0xFFF3 // Set PAPAR[12,13]
+
+PAPAR = PAPAR | 0×000C // clear PADIR[12,13]
+
+PAODR = PAODR & 0xFFF7 // clear PAODR[12]
+
+// Configure port C to enable CLSN and RENA - step 2 from user’s manual
+
+PCDIR = PCDIR & 0xFF3F // clear PCDIR[8,9]
+
+PCPAR = PCPAR & 0xFF3F // Clear PCPAR[8,9]
+
+PCSO = PCSO | 0×00C0 // set PCSO[8,9]
+
+// step 3 - do nothing now
+
+// configure port A to enable the CLK2 and CLK4 pins - step 4 from user’s manual
+
+PAPAR = PAPAR | 0×0A00 // set PAPAR[6] (CLK2) and PAPAR[4] (CLK4).
+
+PADIR = PADIR & 0xF5FF // clear PADIR[4] and PADIR[6]. (All 16-bit)
+
+// Initializing the SI Clock Route Register (SICR) for SCC2.
+
+// Set SICR[R2CS] to 111 and Set SICR[T2CS] to 101, Connect SCC2 to NMSI and Clear
+
+SICR[SC2] - steps 5 & 6 from user’s manual
+
+SICR = SICR & 0xFFFFBFFF
+
+SICR = SICR | 0×00003800
+
+SICR=(SICR & 0xFFFFF8FF) | 0×00000500
+
+// Initializing the SDMA configuration register - step 7
+
+SDCR = 0×01 // Set SDCR to 0×1 (SDCR is 32-bit) - step 7 from user’s manual
+
+// Write RBASE in the SCC1 parameter RAM to point to the RxBD table and the TxBD table in the
+
+// dual-port RAM and specify the
+
+// size of the respective buffer descriptor pools - step 8 user’s manual
+
+RBase = 0×00 (for example)
+
+RxSize = 1500 bytes (for example)
+
+TBase = 0×02 (for example)
+
+TxSize = 1500 bytes (for example)
+
+Index = 0
+
+While (index < RxSize) do
+
+{
+
+// Set up one receive buffer descriptor that tells the communication processor that the next packet is
+
+// ready to be received - similar to step 25
+
+// Set up one transmit buffer descriptor that tells the communication processor that the next packet is
+
+// ready to be transmitted - similar to step 26
+
+index = index + 1}
+
+// Program the CPCR to execute the INIT_RX_AND_TX_PARAMS - deviation from step 9 in user’s
+
+// guide
+
+execute Command(INIT_RX_AND_TX_PARAMS)
+
+// Write RFCR and TFCR with 0×10 for normal operation (all 8-bits) or 0×18 for normal operation
+
+// and Motorola/Freescale byte ordering - step 10 from user’s manual
+
+RFCR = 0×10
+
+TFCR = 0×10
+
+// Write MRBLR with the maximum number of bytes per receive buffer and assume 16 bytes - step
+
+// 11 user’s manual
+
+MRBLR = 1520
+
+// Write C_PRES with 0xFFFFFFFF to comply with the 32 bit CRC-CCITT - step 12 user’s manual
+
+C_PRES = 0xFFFFFFFF
+
+// Write C_MASK with 0xDEBB20E3 to comply with the 16 bit CRC-CCITT - step 13 user’s
+
+// manual
+
+C_MASK = 0xDEBB20E3
+
+// Clear CRCEC, ALEC, and DISFC for clarity - step 14 user’s manual
+
+CRCEC = 0×0
+
+ALEC = 0×0
+
+DISFC = 0×0
+
+// Write PAD with 0×8888 for the PAD value - step 15 user’s manual
+
+PAD = 0×8888
+
+// Write RET_LIM to specify how many retries (with 0×000F for example) - step 16
+
+RET_LIM = 0×000F
+
+// Write MFLR with 0×05EE to make the maximum frame size 1518 bytes - step 17
+
+MFLR = 0×05EE
+
+// Write MINFLR with 0×0040 to make the minimum frame size 64 bytes - step 18
+
+MINFLR = 0×0040
+
+// Write MAXD1 and MAXD2 with 0×05F0 to make the maximum DMA count 1520 bytes - step 19
+
+MAXD1 = 0×05F0
+
+MAXD2 = 0×05F0
+
+// Clear GADDR1-GADDR4. The group hash table is not used - step 20
+
+GADDR1 = 0×0
+
+GADDR2 = 0×0
+
+GADDR3 = 0×0
+
+GADDR4 = 0×0
+
+// Write PADDR1_H, PADDR1_M and PADDR1_L with the 48-bit station address - step 21
+
+stationAddr="embedded device’s Ethernet address" = (for example) 8003E0123456
+
+PADDR1_H = 0×0380 [“80 03” of the station address]
+
+PADDR1_M = 0×12E0 [“E0 12” of the station address]
+
+PADDR1_L = 0×5634 [“34 56” of the station address]
+
+// Clear P_PER. It is not used - step 22
+
+P_PER = 0×0
+
+// Clear IADDR1-IADDR4. The individual hash table is not used - step 23
+
+IADDR1 = 0×0
+
+IADDR2 = 0×0
+
+IADDR3 = 0×0
+
+IADDR4 = 0×0
+
+// Clear TADDR_H, TADDR_M and TADDR_L for clarity - step 24
+
+groupAddress = “embedded device’s group address” = no group address for example
+
+TADDR_H = 0 [similar as step 21 high byte reversed]
+
+TADDR_M = 0 [middle byte reversed]
+
+TADDR_L = 0 [low byte reversed]
+
+// Initialize the RxBD and assume that Rx data buffer is at 0×00001000. Write 0xB000 to
+
+// RxBD[Status and Control] Write 0×0000 to RxBD[Data Length]
+
+// Write 0×00001000 to RxDB[BufferPointer] - step 25
+
+RxBD[Status and Control] is the status of the buffer = 0xB000
+
+Rx data buffer is the byte array the communication processor can use to store the incoming packet in.
+
+= 0×00001000
+
+Save Buffer and Buffer Length in Memory, Then Save Status
+
+// Initialize the TxBD and assume that Tx data buffer is at 0×00002000 Write 0xFC00 to
+
+// TxBD[Status and Control] Write 0×0000 to TxBD[Data Length]
+
+// Write 0×00002000 to TxDB[BufferPointer] - step 26
+
+TxBD[Status and Control] is the status of the buffer = 0xFC00
+
+Tx data buffer is the byte array the communication processor can use to store the outgoing packet in.
+
+= 0×00002000
+
+Save Buffer and Buffer Length in Memory, Then Save Status
+
+// Write 0xFFFF to the SCCE-Transparent to clear any previous events - step 27 user’s manual
+
+SCCE = 0xFFFF
+
+// Initialize the SCCM-Transparent (SCC mask register) depending on the interrupts required of the
+
+// SCCE[TXB, TXE, RXB, RXF] interrupts possible. - step 28 user’s manual
+
+// Write 0×001B to the SCCM for generating TXB, TXE, RXB, RXF interrupts (all events).
+
+// Write 0×0018 to the SCCM for generating TXE and RXF Interrupts (errors).
+
+// Write 0×0000 to the SCCM in order to mask all interrupts.
+
+SCCM = 0×0000
+
+// Initialize CICR, and Write to the CIMR so that SCC2 can generate a system interrupt. - step 29
+
+CIMR = 0×200000000
+
+CICR = 0×001B9F80
+
+// Write 0×00000000 to the GSMR_H to enable normal operation of all modes - step 30 user’s manual
+
+GSMR_H = 0×0
+
+// GSMR_L: 0×1088000C: TCI = 1, TPL = 0b100, TPP = 0b01, MODE = 1100 to configure the
+
+// CTS2 and CD2 pins to automatically control transmission and reception (DIAG field). Normal
+
+// operation of the transmit clock is used. Notice that the transmitter (ENT) and receiver (ENR) are
+
+// not enabled yet. - step 31 user’s manual
+
+GSMR_L = 0×1088000C
+
+// Write 0xD555 to the DSR - step 32
+
+DSR = 0xD555
+
+// Set PSMR-SCC Ethernet to configure 32-bit CRC - step 33
+
+ // 0×080A: IAM = 0, CRC = 10 (32-bit), PRO = 0, NIB = 101
+
+ // 0×0A0A: IAM = 0, CRC = 10 (32-bit), PRO = 1, NIB = 101
+
+ // 0×088A: IAM = 0, CRC = 10 (32-bit), PRO = 0, SBT = 1, NIB = 101
+
+ // 0×180A: HBC = 1, IAM = 0, CRC = 10 (32-bit), PRO = 0, NIB = 101
+
+PSMR = 0×080A
+
+// Enable the TENA pin (RTS2) Since the MODE field of the GSMR_L is written to Ethernet, the
+
+// TENA signal is low. Write PCPAR bit 14 with a one and PCDIR bit 14 with a
+
+// zero - step 34
+
+PCPAR = PCPAR | 0×0001
+
+PCDIR = PCDIR & 0xFFFE
+
+// Write 0×1088003C to the GSMR_L register to enable the SCC2 transmitter and receiver. - step 35
+
+GSMR_L = 0×1088003C
+
+-=-=-=-
+
+// Start the transmitter and the receiver
+
+// After initializing the buffer descriptors, program the CPCR to execute an INIT RX AND TX
+
+// PARAMS command for this channel.
+
+ Execute Command(Cp.INIT_RX_AND_TX_PARAMS)
+
+/
+
+/ Set GSMR_L[ENR] and GSMR_L[ENT] to enable the receiver and the transmitter
+
+ GSMR_L = GSMR_L | 0×00000020 | 0×00000010
+
+// END OF MPC823 ETHERNET INITIALIZATION SEQUENCE - now when appropriate inter-
+
+// rupt triggered, data is moved to or from transmit/receive buffers
+
+
+
+#### NetSilicon NET+ARM40 Ethernet Example
+
+[Figure 8-41](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0340) shows a diagram of a NET+ARM connected to Ethernet hardware components on the board (see [Section II](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/ITR003.html#ITR003) for more information on Ethernet hardware components).
+
+![image](Referencias/F00008Xf08-41-9780123821966.jpg)
+
+**Figure 8-41** NET + ARM Ethernet Block Diagram.[[8\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB8)
+
+Like the MPC823, the NET+ARM40 Ethernet protocol is configured to have full-duplex support, as well as be *interrupt driven*. However, unlike the MPC823, the NET+ARM’s initialization sequence is simpler and can be divided into three major functions: performing reset of Ethernet processor, initializing buffers, and enabling DMA channels (see NET+ARM Hardware User’s Guide for NET+ARM 15/40 and pseudocode below).
+
+**NET + ARM40 Pseudocode**
+
+…
+
+// Perform a low level reset of the NCC Ethernet chip
+
+// determine MII type
+
+MIIAR = MIIAR & 0xFFFF0000 | 0×0402
+
+MIICR = MIICR | 0×1
+
+// wait until current PHY operation completes
+
+if using MII
+
+{
+
+// set PCSCR according to poll count - 0×00000007 (>= 6), 0×00000003 (< 6)
+
+// enable autonegotiation
+
+}
+
+else {  // ENDEC MODE
+
+EGCR = 0×0000C004
+
+// set PCSCR according to poll count - 0×00000207 (>= 6), 0×00000203 (< 6)
+
+// set EGCR to correct mode if automan jumper removed from board
+
+}
+
+// clear transfer and receive registers by reading values
+
+get LCC
+
+get EDC
+
+get MCC
+
+get SHRTFC
+
+get LNGFC
+
+get AEC
+
+get CRCEC
+
+get CEC
+
+// Inter-packet Gap Delay = 0.96us for MII and 9.6us for 10BaseT
+
+if using MII then {
+
+B2BIPGGTR = 0×15
+
+NB2BIPGGTR = 0×0C12
+
+} else {
+
+B2BIPGGTR = 0×5D
+
+NB2BIPGGTR = 0×365A);
+
+}
+
+MACCR = 0×0000000D
+
+// Perform a low level reset of the NCC Ethernet chip continued
+
+// Set SAFR = 3: PRO Enable Promiscuous Mode (receive ALL packets), 2: PRM Accept ALL
+
+// multicast packets, 1: PRA Accept multicast packets using Hash
+
+// Table, 0 : BROAD Accept ALL broadcast packets
+
+SAFR = 0×00000001
+
+// load Ethernet address into addresses 0xFF8005C0-0xFF8005C8
+
+// load MCA hash table into addresses 0xFF8005D0-0xFF8005DC
+
+STLCR = 0×00000006
+
+If using MII {
+
+ // Set EGCR according to what rev - 0xC0F10000 (rev<4), 0xC0F10000 (PNA support disabled)
+
+else {
+
+ // ENDEC mode
+
+EGCR = 0xC0C08014}
+
+// Initialize buffer descriptors
+
+ // setup Rx and Tx buffer descriptors
+
+ DMABDP1A = “receive buffer descriptors”
+
+ DMABDP2 = “transmit buffer descriptors”
+
+// enable Ethernet DMA channels
+
+// setup the interrupts for receive channels
+
+DMASR1A = DMASR1A & 0xFF0FFFFF | (NCIE | ECIE | NRIE | CAIE)
+
+// setup the interrupts for transmit channels
+
+DMASR2 = DMASR2 & 0xFF0FFFFF | (ECIE | CAIE)
+
+ // Turn each channel on
+
+ If MII is 100 Mbps then {
+
+  DMACR1A = DMACR1A & 0xFCFFFFFF | 0×02000000
+
+ }
+
+DMACR1A = DMACR1A & 0xC3FFFFFF | 0×80000000
+
+ If MII is 100 Mbps then {
+
+ DMACR2 = DMACR2 & 0xFCFFFFFF | 0×02000000
+
+ }
+
+else if MII is 10 Mbps{
+
+ DMACR2 = DMACR2 & 0xFCFFFFFF
+
+ }
+
+DMACR2 = DMACR2 & 0xC3FFFFFF | 0×84000000
+
+// Enable the interrupts for each channel
+
+DMASR1A = DMASR1A | NCIP | ECIP | NRIP | CAIP
+
+DMASR2 = DMASR2 | NCIP | ECIP | NRIP | CAIP
+
+// END OF NET+ARM ETHERNET INITIALIZATION SEQUENCE - now when appropriate
+
+// interrupt triggered, data is moved to or from transmit/receive buffers
+
+### 8.4.2 EXAMPLE 5: INITIALIZING AN RS-232 DRIVER
+
+One of the most widely implemented asynchronous serial I/O protocols is the *RS-232* or EIA-232 (Electronic Industries Association-232), which is primarily based upon the Electronic Industries Association family of standards. These standards define the major components of any RS-232 based system, which is implemented almost entirely in hardware.
+
+The firmware (software) required to enable RS-232 functionality maps to the lower section of the OSI data-link layer. The hardware components can all be mapped to the physical layer of the OSI model (see [Figure 8-42](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0345)), but will not be discussed in this section (see [Section II](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/ITR003.html#ITR003)).
+
+![image](Referencias/F00008Xf08-42-9780123821966.jpg)
+
+**Figure 8-42** OSI model.
+
+As mentioned in [Chapter 6](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP006.html#CHP006), the RS-232 component that can be integrated on the master processor is called the *RS-232 Interface*, which can be configured for synchronous or asynchronous transmission. For example, in the case of asynchronous transmission, the only firmware (software) that is implemented for RS-232 is in a component called the *UART (universal asynchronous transmitter receiver)*, which implements the serial data transmission (see [Figure 8-43](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0350)).
+
+![image](Referencias/F00008Xf08-43-9780123821966.jpg)
+
+**Figure 8-43** RS-232 Hardware Diagram.[[7\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB7)
+
+Data is transmitted asynchronously over RS-232 in a stream of bits that are traveling at a constant rate. The frame processed by the UART is in the format shown in [Figure 8-44](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0355).
+
+![image](Referencias/F00008Xf08-44-9780123821966.jpg)
+
+**Figure 8-44** RS-232 Frame Diagram.[[7\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB7)
+The RS232 protocol defines frames as having: one start bit, seven or eight data bits, one parity bit, and one or two stop bits.
+
+#### Motorola/Freescale MPC823 RS-232 Example
+
+[Figure 8-45](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#F0360) shows a MPC823 connected to RS-232 hardware components on the board (see [Section II](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/ITR003.html#ITR003) for more information on the other hardware components).
+
+![image](Referencias/F00008Xf08-45-9780123821966.jpg)
+
+**Figure 8-45** MPC823 RS-232 Block Diagram.[[9\]](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP008.html#BIB9)
+
+© Freescale Semiconductor, Inc. Used by permission.
+
+There are different integrated components on a MPC823 that can be configured into UART mode, such as SCC2 and the SMCs (serial management controllers). SCC2 was discussed in the previous section as being enabled for Ethernet, so this example will look at configuring an SMC for the serial port. Enabling RS-232 on a MPC823 through the SMCs is discussed in section 16.11, The Serial Management Controllers in the 2000 MPC823 User’s Manual.
+
+16.11 THE SERIAL MANAGEMENT CONTROLLERS
+
+The serial management controllers (SMCs) consist of two full-duplex ports that can be independently configured to support any one of three protocols—UART, Transparent, or general-circuit interface (GCI). Simple UART operation is used to provide a debug/monitor port in an application, which allows a serial communication controller (SCCx) to be free for other purposes. The serial management controller clock can be derived from one of four internal baud rate generators or from a 16× external clock pin.
+
+…
+
+The software for configuring and initializing RS-232 on the MPC823 can be based upon the SMC1 UART controller programming example in section 16.11.6.15.
+
+16.11.6.15 SMC1 UART CONTROLLER PROGRAMMING EXAMPLE
+
+The following is an initialization sequence for 9,600 baud, 8 data bits, no parity, and 1 stop bit operation of an SMC1 UART controller assuming a 25 MHz system frequency. BRG1 and SMC1 are used.
+
+\1. Configure the port B pins to enable SMTXD1 and SMRXD1. Write PBPAR bits 25 and 24 with ones and then PBDIR and PBODR bits 25 and 24 with zeros.
+
+\2. Configure the BRG1. Write 0×010144 to BRGC1. The DIV16 bit is not used and divider is 162 (decimal). The resulting BRG1 clock is 16x the preferred bit rate of SMC1 UART controller.
+
+\3. Connect the BRG1 clock to SMC1 using the serial interface. Write the SMC1 bit SIMODE with a D and the SMC1CS field in SIMODE register with 0×000.
+
+\4. Write RBASE and TBASE in the SMC1 parameter RAM to point to the RX buffer descriptor and TX buffer descriptor in the dual-port RAM. Assuming one RX buffer descriptor at the beginning of dual-port RAM and one TX buffer descriptor following that RX buffer descriptor, write RBASE with 0×2000 and TBASE with 0×2008.
+
+\5. Program the CPCR to execute the INIT RX AND TX PARAMS command. Write 0×0091 to the CPCR.
+
+\6. Write 0×0001 to the SDCR to initialize the SDMA configuration register.
+
+\7. Write 0×18 to the RFCR and TFCR for normal operation.
+
+\8. Write MRBLR with the maximum number of bytes per receive buffer. Assume 16 bytes, so MRBLR = 0×0010.
+
+\9. Write MAX_IDL with 0×0000 in the SMC1 UART parameter RAM for clarity.
+
+\10. Clear BRKLN and BRKEC in the SMC1 UART parameter RAM for clarity.
+
+\11. Set BRKCR to 0×0001, so that if a STOP TRANSMIT command is issued, one bit character is sent.
+
+\12. Initialize the RX buffer descriptor. Assume the RX data buffer is at 0×00001000 in main memory. Write 0xB000 to RX_BD_Status. 0×0000 to RX_BD_Length (not required), and 0×00001000 to RX_BD_Pointer.
+
+\13. Initialize the TX buffer descriptor. Assume the TX data buffer is at 0×00002000 in main memory and contains five 8-bit characters. Then write 0xB000 to TX_BD_Status, 0×0005 to TX_BD_Length, and 0×00002000 to TX_BD_Pointer.
+
+\14. Write 0xFF to the SMCE-UART register to clear any previous events.
+
+\15. Write 0×17 to the SMCM-UART register to enable all possible serial management controller interrupts.
+
+\16. Write 0×00000010 to the CIMR to SMC1 can generate a system interrupt. The CICR must also be initialized.
+
+\17. Write 0×4820 to SMCMR to configure normal operation (not loopback), 8-bit characters, no parity, 1 stop bit. Notice that the transmitter and receiver are not enabled yet.
+
+\18. Write 0×4823 to SMCMR to enable the SMC1 transmitter and receiver. This additional write ensures that the TEN and REN bits are enabled last.
+
+NOTE: After 5 bytes are transmitted, the TX buffer descriptor is closed. The receive buffer is closed after 16 bytes are received. Any data received after 16 bytes causes a busy (out-of-buffers) condition since only one RX buffer descriptor is prepared.
+
+Similarly to the Ethernet implementation, MPC823 serial driver is configured to be *interrupt driven*, and its initialization sequence can also be divided into seven major functions: disabling SMC1, setting up ports and the baud rate generator, initializing buffers, setting up parameter RAM, initializing interrupts, setting registers, and enabling SMC1 to transmit/receive (see the following pseudocode).
+
+MPC823 Serial Driver Pseudocode
+
+…
+
+// disabling SMC1
+
+// Clear SMCMR[REN] to disable the receiver
+
+ SMCMR = SMCMR & 0×0002
+
+ // Issue Init Stop TX Command for the SCC
+
+ execute command(STOP_TX)
+
+ // clear SMCMR[TEN] to indicate that transmission has stopped
+
+ SMCMR = SMCMR & 0×0002
+
+-=-=-
+
+// Configure port B pins to enable SMTXD1 and SMRXD1. Write PBPAR bits 25 and 24 with ones
+
+// and then PBDIR bits 25 and 24 with zeros - step 1 user’s manual
+
+PBPAR = PBPAR | 0×000000C0
+
+PBDIR= PBDIR & 0xFFFFFF3F
+
+PBODR = PBODR & 0xFFFFFF3F
+
+// Configure BRG1 - BRGC: 0×10000 - EN = 1-25 MHZ : BRGC: 0×010144 - EN = 1, CD = 162
+
+// (b10100010), DIV16 = 0 (9600)
+
+// BRGC: 0×010288 - EN = 1, CD = 324 (b101000100), DIV16 = 0 (4800)
+
+// 40 Mhz : BRGC: 0×010207 - EN = 1, CD = 259 (b1 0000 0011), DIV16 = 0
+
+// (9600) - step 2 user’s manual
+
+BRGC= BRGC | 0×010000
+
+// Connect the BRG1 (Baud rate generator) to the SMC. Set the SIMODE[SMCx] and the
+
+// SIMODE[SMC1CS] depending on baude rate generator where SIMODE[SMC1] =
+
+// SIMODE[16], and SIMODE[SMC1CS]=SIMODE[17-19] - step 3 user’s manual
+
+SIMODE = SIMODE & 0xFFFF0FFF | 0×1000
+
+// Write RBASE and TBASE in the SCM parameter RAM to point to the RxBD table and the TxBD
+
+// table in the dual-port RAM - step 4
+
+RBase = 0×00 (for example)
+
+RxSize = 128 bytes (for example)
+
+TBase = 0×02 (for example)
+
+TxSize = 128 bytes (for example)
+
+Index = 0
+
+While (index<RxSize) do
+
+{
+
+// Set up one receive buffer descriptor that tells the communication processor that the next packet is
+
+// ready to be received - similar to step 12
+
+// Set up one transmit buffer descriptor that tells the communication processor that the next packet is
+
+// ready to be transmitted - similar to step 13
+
+index = index + 1}
+
+// Program the CPCR to execute the INIT RX AND TX PARAMS command - step 5
+
+execute Command(INIT_RX_AND_TX_PARAMS)
+
+// Initialize the SDMA configuration register, Set SDCR to 0×1 (SDCR is 32-bit) - step 6 user’s
+
+// manual
+
+SDCR =0×01
+
+// Set RFCR,TFCR - Rx,Tx Function Code, Initialize to 0×10 for normal operation (All 8-bits),
+
+// Initialize to 0×18 for normal operation and Motorola/Freescale byte ordering - step 7
+
+RFCR = 0×10
+
+TFCR = 0×10
+
+// Set MRBLR - Max. Receive Buffer Length, assuming 16 bytes (multiple of 4) - step 8
+
+MRBLR = 0×0010
+
+// Write MAX_IDL (Maximum idle character) with 0×0000 in the SMC1 UART parameter RAM to
+
+// disable the MAX_IDL functionality - step 9
+
+MAX_IDL = 0
+
+// Clear BRKLN and BRKEC in the SMC1 UART parameter RAM for clarity - step 10
+
+BRKLN = 0
+
+BRKEC = 0
+
+// Set BRKCR to 0×01 - so that if a STOP TRANSMIT command is issued, one break character is
+
+// sent - step 11
+
+BRKCR = 0×01
+
+## 8.5 Summary
+
+This chapter discussed device drivers, the type of software needed to manage the hardware in an embedded system. The chapter also introduced a general set of device driver routines, which make up most device drivers. Interrupt handling (on the PowerPC platform), memory management (on the PowerPC platform), I2C bus (on a PowerPC-based platform), and I/O (Ethernet and RS-232 on PowerPC and ARM-based platforms) were real-world examples provided, along with pseudocode to demonstrate how device driver functionality can be implemented.
+
+The next chapter, [Chapter 9](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP009.html#CHP009), *Embedded Operating Systems*, is an introduction to the technical fundamentals of embedded operating systems and their function within a design.
+
+
+
+# Chapter 10
+
+# Middleware and Application Software
+
+### IN THIS CHAPTER
+
+• Defining middleware
+
+• Defining application software
+
+• Introducing real-world networking and Java examples of middleware
+
+• Introducing real-world networking and Java examples used in application software
+
+The line between middleware and application software has been historically blurred. Furthermore, at this time, there is no formal consensus on how embedded systems middleware should be defined within the embedded system industry. Thus, until such time that there is a consensus, this chapter takes a more practical approach of introducing both middleware and application software together. The remaining sections of this chapter define middleware and application software concepts, and provide real-world pseudocode examples of middleware and application software.
+
+## 10.1 What is Middleware?
+
+In the most general terms, middleware software is any system software that is not the operating system (OS) kernel, device drivers, or application software. Middleware is software that has evolved to the point of being abstracted out of the application layer for a variety of reasons. One reason is that it may already be included as part of the off-the-shelf OS package. Other reasons to have removed software from the application into the middleware layer have been to allow reusability with other applications, to decrease development costs or time by purchasing it off-the-shelf through a third party vendor, or to simplify application code.
+
+Remember, what determines if particular software component is “middleware” is where it resides within the embedded system’s architecture and not because of its inherent purpose within the system, alone. Middleware is system software that typically either sits on the device drivers or on top of the OS and can sometimes be incorporated within the OS itself. Middleware acts as an abstraction layer that mediates between application software and underlying system software, such as an OS kernel or device driver software. Middleware is also software that can mediate and manage interactions between multiple applications. These applications can be contained within the same embedded system or across multiple networked computer systems (see [Figure 10-1](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP010.html#F0010)).
+
+![image](Referencias/F000108f10-01-9780123821966.jpg)
+
+**Figure 10-1** Middleware within the Embedded Systems Model.
+
+The main reason why software teams incorporate different types of middleware is to achieve some combination of the following design requirements:
+
+• *Adaptability*: enables overlying middleware and/or embedded applications to adapt to changes in availability of system resources.
+
+• *Connectivity* and *Intercommunication*: provide overlying middleware and/or embedded applications the ability to transparently communicate with applications within other devices, via some user-friendly, standardized interface.
+
+• *Flexibility* and *Scalability*: allow overlying middleware and/or embedded applications to be configurable and customizable in terms of functionality depending on application requirements, overall device requirements, underlying system software/hardware limitations, for example.
+
+• *Portability*: allows overlying middleware and/or embedded applications to run on different embedded systems with different underlying system software and/or hardware layers.
+
+• *Security*: ensures that the overlying middleware and/or embedded applications have authorized access to system resources.
+
+There are many different types of middleware in the embedded systems arena, including message-oriented middleware (MOM), object request brokers (ORBs), remote procedure calls (RPCs), database/database access, and networking protocols above the device driver layer and below the application layers of the OSI (Open Systems Interconnection) model. However, within the scope of this book, all types of embedded systems middleware can be grouped into two general categories: core middleware and middleware that builds on these core components.
+
+*Core middleware* software is more general purpose and the most commonly found type in embedded systems designs today that incorporates a middleware layer. Core middleware is also used as the foundation for more complex middleware software and can be further broken down into types, such as file systems, networking middleware, databases, and virtual machines to name a few. The reader will have a strong foundation to understanding, using and/or designing any middleware component successfully by understanding the different types of core middleware software.
+
+More *complex middleware that builds on the core components* will vary widely from market to market and device to device, and generally falls under some combination of the following types:
+
+• *Market-specific* complex middleware, meaning middleware that is unique to a particular family of embedded systems, such as a digital TV (DTV) standard-based software that sits on an OS or Java Virtual Machine (JVM).
+
+• Complex *messaging* and *communication* middleware, such as:
+
+• Message oriented and distributed messaging, i.e., MOM, Message Queues, Java Messaging Service (JMS), Message Brokers, Simple Object Access Protocol (SOAP).
+
+• Distributed transaction, i.e., RPC, Remote Method Invocation (RMI), Distributed Component Object Model (DCOM), Distributed Computing Environment (DCE).
+
+• Transaction processing, i.e., Java Beans (TP) Monitor.
+
+• ORBs, i.e., Common Object Request Broker Object (CORBA), Data Access Object (DAO) Frameworks.
+
+• Authentication and security, i.e., Java Authentication and Authorization Support (JAAS).
+
+• Integration brokers.
+
+A middleware element can be further categorized as *proprietary*, meaning it is closed software supported by a company that licenses it to others for use, or *open*, meaning it is standardized by some industry committee and can be implemented and/or licensed by any interested party.
+
+More complex embedded systems usually have more than one middleware element, since it is unusual to find one technology that supports all specified application requirements. In this case, the individual middleware elements are typically selected based upon their interoperability with each other, so as to avoid later problems in integration. In some cases, integrated middleware packages of compatible middleware elements are available commercially, off-the-shelf, for use in embedded systems, such as the Sun embedded Java solutions, Microsoft’s .NET Compact Framework, and CORBA from the Object Management Group (OMG), to name a few. Many embedded OS vendors also provide integrated middleware packages that run “out-of-the-box” with their respective OS and hardware platforms.
+
+[Section 10.3](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP010.html#S0020) of this chapter provides specific real-world examples of individual middleware networking elements, as well as integrated middleware Java packages.
+
+## 10.2 What Is an Application?
+
+The final type of software in an embedded system is the *application* software. As shown in [Figure 10-2](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP010.html#F0015), application software sits on top of the system software layer, and is dependent on, managed, and run by the system software. It is the software within the application layer that inherently defines what type of device an embedded system is, because the functionality of an application represents at the highest level the purpose of that embedded system and does *most* of the interaction with users or administrators of that device, if any exists. *(Note: I say* most *because features such as powering on or off the device when a user hits a button may trigger a device driver function directly for the power on/power off sequence, rather than bringing up an application—it depends on the programmer how that is handled.)*
+
+![image](Referencias/F000108f10-02-9780123821966.jpg)
+
+**Figure 10-2** Application layer and Embedded Systems Model.
+
+Like embedded standards, embedded applications can be divided according to whether they are market specific (implemented in only a specific type of device, such as video-on-demand applications in an interactive DTV) or general-purpose (can be implemented across various types of devices, such as a browser).
+
+[Section 10.4](https://learning.oreilly.com/library/view/embedded-systems-architecture/9780123821966/xhtml/CHP010.html#S0060) introduces real-world examples of types of application software and how they contribute to an embedded system’s architecture.
+
