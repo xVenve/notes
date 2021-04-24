@@ -3745,13 +3745,6 @@ int FlashSize = 0×00800000; // The size of the Flash devices in bytes, i.e., 8M
 
 // the corresponding sizes.
 
-BlockOffsetTable={{ 0×00000000, 0×00008000 }, { 0×00008000, 0×00004000 },
-
- { 0×0000C000, 0×00004000 }, { 0×00010000, 0×00010000 },
-
- { 0×00020000, 0×00020000 }, { 0×00040000, 0×00020000 },
-
- { 0×00060000, 0×00020000 }, { 0×00080000, 0×00020000 }, …};
 
 // Flash write pseudocode example
 
